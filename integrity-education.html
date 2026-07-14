@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>미래세대 청렴교육 - 개념 3종 세트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233C;
+    --ink-soft:#3A4A66;
+    --paper:#F2F1EB;
+    --paper-card:#FFFFFF;
+    --gold:#D9A441;
+    --gold-deep:#A9761F;
+    --teal:#2F7C6E;
+    --teal-deep:#1E5449;
+    --berry:#B23A55;
+    --berry-deep:#7E2439;
+    --line:#DEDCD1;
+    --muted:#7B7F72;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans KR', -apple-system, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .screen{
+    min-height:100vh;
+    display:none;
+    flex-direction:column;
+  }
+  .screen.active{display:flex;}
+  .wrap{
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    padding:24px 20px 40px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+    background:none;
+    color:inherit;
+  }
+
+  /* HUB */
+  .hub-header{
+    text-align:center;
+    padding:36px 20px 20px;
+  }
+  .hub-eyebrow{
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--gold-deep);
+    font-weight:700;
+    margin:0 0 10px;
+  }
+  .hub-title{
+    font-size:26px;
+    font-weight:900;
+    margin:0 0 8px;
+    line-height:1.35;
+  }
+  .hub-desc{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .module-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:8px;
+  }
+  .module-card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    text-align:left;
+    width:100%;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .module-card:active{transform:scale(0.98);}
+  .module-icon{
+    width:52px;height:52px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;
+    flex-shrink:0;
+    color:#fff;
+    font-weight:700;
+  }
+  .m-conflict .module-icon{background:var(--teal);}
+  .m-solicit .module-icon{background:var(--berry);}
+  .m-report .module-icon{background:var(--gold-deep);}
+  .module-body{flex:1;min-width:0;}
+  .module-name{font-size:16px;font-weight:700;margin:0 0 4px;}
+  .module-sub{font-size:12.5px;color:var(--muted);margin:0;}
+  .module-meta{
+    font-size:11px;
+    color:var(--muted);
+    display:flex;align-items:center;gap:4px;
+    margin-top:8px;
+  }
+  .module-check{
+    font-size:20px;
+    color:var(--teal);
+    flex-shrink:0;
+  }
+  .hub-footer{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    padding:28px 20px 10px;
+  }
+
+  /* TOPBAR (shared in module flow) */
+  .topbar{
+    display:flex;align-items:center;gap:10px;
+    padding:16px 20px 4px;
+    max-width:480px;margin:0 auto;width:100%;
+  }
+  .back-btn{
+    font-size:13px;
+    color:var(--ink-soft);
+    padding:6px 4px;
+  }
+  .progress-track{
+    flex:1;
+    height:5px;
+    background:var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    border-radius:4px;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    font-size:11px;
+    color:var(--muted);
+    min-width:38px;
+    text-align:right;
+  }
+
+  /* CARD NEWS */
+  .cardnews-stage{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:20px 0;
+  }
+  .cn-card{
+    background:var(--paper-card);
+    border-radius:20px;
+    padding:32px 24px;
+    min-height:280px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    border:1px solid var(--line);
+  }
+  .cn-eyebrow{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1px;
+    margin:0 0 10px;
+  }
+  .cn-title{
+    font-size:21px;
+    font-weight:900;
+    margin:0 0 14px;
+    line-height:1.4;
+  }
+  .cn-body{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .cn-chip-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .cn-chip{
+    padding:8px 14px;
+    border-radius:20px;
+    font-size:13.5px;
+    font-weight:700;
+  }
+  .cn-cover{
+    align-items:center;
+    text-align:center;
+  }
+  .cn-cover .cn-icon{
+    width:56px;height:56px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;
+    color:#fff;
+    margin-bottom:14px;
+  }
+  .nav-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 0 0;
+  }
+  .dot-row{display:flex;gap:6px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--line);}
+  .dot.on{background:var(--ink);}
+  .nav-btn{
+    font-size:14px;font-weight:700;
+    padding:10px 18px;
+    border-radius:10px;
+    background:var(--ink);
+    color:#fff;
+  }
+  .nav-btn.ghost{
+    background:none;
+    color:var(--ink-soft);
+    padding:10px 8px;
+  }
+  .nav-btn:disabled{opacity:0.3;}
+
+  /* QUIZ */
+  .quiz-stage{flex:1;display:flex;flex-direction:column;padding:20px 0;}
+  .quiz-tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    padding:5px 10px;
+    border-radius:20px;
+    margin-bottom:14px;
+    width:fit-content;
+  }
+  .quiz-q{
+    font-size:17px;
+    font-weight:700;
+    line-height:1.6;
+    margin:0 0 24px;
+  }
+  .ox-row{display:flex;gap:12px;margin-bottom:16px;}
+  .ox-btn{
+    flex:1;
+    padding:22px 0;
+    border-radius:16px;
+    border:2px solid var(--line);
+    font-size:16px;
+    font-weight:900;
+    background:var(--paper-card);
+    display:flex;flex-direction:column;gap:4px;align-items:center;
+  }
+  .ox-btn span{font-size:11px;font-weight:500;}
+  .ox-btn.o-btn{color:var(--teal-deep);}
+  .ox-btn.x-btn{color:var(--berry-deep);}
+  .ox-btn:disabled{opacity:0.55;}
+  .ox-btn.correct{border-color:var(--teal);background:#EAF3F1;}
+  .ox-btn.wrong{border-color:var(--berry);background:#FBEBEE;}
+  .feedback-box{
+    display:none;
+    font-size:13.5px;
+    line-height:1.7;
+    padding:14px 16px;
+    border-radius:12px;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-left:4px solid var(--ink);
+  }
+
+  /* RESULT */
+  .result-stage{flex:1;display:flex;flex-direction:column;padding:24px 0;}
+  .result-score{
+    text-align:center;
+    padding:28px 20px;
+    background:var(--paper-card);
+    border-radius:20px;
+    border:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .result-num{font-size:40px;font-weight:900;margin:6px 0;}
+  .result-caption{font-size:12.5px;color:var(--muted);}
+  .result-msg{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin:14px 0 0;
+    line-height:1.7;
+  }
+  .reflect-label{
+    font-size:14px;font-weight:700;
+    margin:6px 0 8px;
+  }
+  .reflect-sub{
+    font-size:12.5px;color:var(--muted);
+    margin:0 0 10px;
+  }
+  textarea{
+    width:100%;
+    min-height:96px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    padding:14px;
+    font-family:inherit;
+    font-size:14px;
+    resize:vertical;
+    background:var(--paper-card);
+  }
+  textarea:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .result-actions{
+    display:flex;flex-direction:column;gap:10px;
+    margin-top:22px;
+  }
+  .primary-btn{
+    background:var(--ink);
+    color:#fff;
+    padding:15px 0;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+    text-align:center;
+  }
+  .secondary-btn{
+    padding:13px 0;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    text-align:center;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+  }
+  .saved-note{
+    font-size:12px;
+    color:var(--teal-deep);
+    text-align:center;
+    margin-top:10px;
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="screen-hub">
+  <div class="wrap">
+    <div class="hub-header">
+      <p class="hub-eyebrow">미래세대 청렴교육</p>
+      <p class="hub-title">청렴 개념 3종 세트</p>
+      <p class="hub-desc">카드뉴스로 배우고, 퀴즈로 확인해요.<br>하나씩 골라서 시작해보세요.</p>
+    </div>
+    <div class="module-list" id="moduleList"></div>
+    <div class="hub-footer">각 과정은 약 5~7분이 걸려요 · 순서와 상관없이 학습할 수 있어요</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-cardnews">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHub()">‹ 처음으로</button>
+    <div class="progress-track"><div class="progress-fill" id="cnProgressFill"></div></div>
+    <div class="progress-label" id="cnProgressLabel"></div>
+  </div>
+  <div class="wrap">
+    <div class="cardnews-stage" id="cnStage"></div>
+    <div class="nav-row">
+      <button class="nav-btn ghost" id="cnPrev">이전</button>
+      <div class="dot-row" id="cnDots"></div>
+      <button class="nav-btn" id="cnNext">다음</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-quiz">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHub()">‹ 처음으로</button>
+    <div class="progress-track"><div class="progress-fill" id="qProgressFill"></div></div>
+    <div class="progress-label" id="qProgressLabel"></div>
+  </div>
+  <div class="wrap">
+    <div class="quiz-stage" id="quizStage"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-result">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHub()">‹ 처음으로</button>
+  </div>
+  <div class="wrap">
+    <div class="result-stage" id="resultStage"></div>
+  </div>
+</div>
+
+<script>
+const MODULES = {
+  conflict: {
+    name: '이해충돌',
+    sub: '공적 역할과 개인적 이익이 부딪힐 때',
+    icon: '균',
+    colorVar: '--teal',
+    colorDeepVar: '--teal-deep',
+    cards: [
+      {kind:'cover', title:'이해충돌이 뭘까?', icon:'균'},
+      {label:'정의', title:'이해충돌이란', body:'공적인 역할을 맡은 사람이, 그 역할과 개인적인 이익이 서로 부딪히는 상황에 놓이는 것을 말해요.'},
+      {label:'비유', title:'축구 심판이라면?', body:'축구 심판이 자기 아들이 뛰는 팀의 경기를 심판 본다면, 아무리 공정하게 판정해도 사람들은 결과를 믿기 어려울 거예요.'},
+      {label:'실생활 예시', title:'학급에서라면?', body:'학급 물품 구매를 맡은 반장이, 자기 친척이 운영하는 문구점에서 물건을 산다면 어떨까요?'},
+      {label:'왜 문제인가', title:'공정성이 흔들려요', body:'실제로 부정한 의도가 없었더라도, 개인적 이익 쪽으로 판단이 기울 수 있다는 의심 자체가 신뢰를 무너뜨려요.'},
+      {label:'요약', title:'핵심 키워드', chips:['공적 역할','개인적 이익','공정성 훼손']}
+    ],
+    quiz: [
+      {text:'학급회장이 체육대회 조를 편성하면서 친한 친구들을 같은 조에 몰아준다.', answer:true, explainT:'맡은 역할(공정한 조 편성)과 개인적 친분이 부딪혀 판단에 영향을 준 상황이에요.', explainF:''},
+      {text:'급식 당번이 배식 순서를 번호 순서대로 공평하게 진행한다.', answer:false, explainF:'개인적 이익이 개입되지 않은, 규정대로 처리한 공정한 상황이에요.'},
+      {text:'동아리 부장이 활동비로 물품을 사면서 자기 가족이 운영하는 가게에서 구매한다.', answer:true, explainT:'예산 집행이라는 공적 역할과 가족의 이익이 겹치는 전형적인 이해충돌 상황이에요.'},
+      {text:'학생회 임원이 선후배 관계와 상관없이 규정대로 상벌점을 부여한다.', answer:false, explainF:'개인적 관계를 배제하고 원칙대로 처리했으니 이해충돌 상황이 아니에요.'},
+      {text:'대회 심사를 맡은 학생이 친한 친구의 작품에 더 높은 점수를 준다.', answer:true, explainT:'심사자라는 공적 역할이 친분이라는 개인적 요소에 흔들린 상황이에요.'},
+      {text:'반장이 청소 구역을 제비뽑기로 공정하게 정한다.', answer:false, explainF:'무작위 방식으로 개인의 개입 여지를 없앤 공정한 절차예요.'},
+      {text:'[경계선] 학급 물품을 가장 싸게 파는 곳을 찾았는데 우연히 삼촌 가게였다. 이 사실을 선생님께 미리 알리고 다른 학생이 가격을 확인한 뒤 구매했다.', answer:true, explainT:'미리 알리고 절차를 거쳐 문제를 최소화했더라도, 담당자의 역할과 가족의 이익이 겹치는 \'상황\' 자체는 이해충돌이 맞아요. 공개와 절차는 대응 방법이지, 상황 자체를 없애주진 않아요.'},
+      {text:'[경계선] 학생회장이 팀장으로 친한 친구를 추천했는데, 그 친구가 실제로 가장 실력이 뛰어나 다른 학생들도 모두 동의했다.', answer:true, explainT:'결과적으로 능력 있는 사람이 뽑혔더라도, 추천 과정에 개인적 친분이 함께 작용할 수 있었던 구조 자체가 이해충돌이에요. 좋은 결과가 상황의 성격을 바꾸진 않아요.'}
+    ],
+    resultMsg: '이해충돌은 실제로 부정한 결과가 없어도, 개인적 이익이 판단에 영향을 줄 수 있다는 상황 자체가 문제가 돼요.',
+    reflectPrompt: '우리 학교나 학급에서 이해충돌이 생길 수 있는 상황을 하나 떠올려 적어보세요.'
+  },
+  solicit: {
+    name: '부정청탁',
+    sub: '규정과 절차를 벗어난 특혜 요구',
+    icon: '청',
+    colorVar: '--berry',
+    colorDeepVar: '--berry-deep',
+    cards: [
+      {kind:'cover', title:'부정청탁이 뭘까?', icon:'청'},
+      {label:'정의', title:'부정청탁이란', body:'공적인 업무를 맡은 사람에게 정해진 규정과 절차를 벗어나 특혜를 요구하는 것을 말해요.'},
+      {label:'비유', title:'새치기 부탁이라면?', body:'줄을 서 있는데 아는 사람이 안내원에게 몰래 부탁해서 새치기를 시켜준다면, 뒤에서 기다리던 사람들은 억울하겠죠.'},
+      {label:'실생활 예시', title:'학교에서라면?', body:'학부모가 담임 선생님께 "우리 아이 성적을 좀 올려달라"고 개인적으로 부탁하는 경우가 대표적이에요.'},
+      {label:'왜 문제인가', title:'기회를 빼앗아요', body:'정당한 절차와 기준이 무너지면, 원칙대로 노력한 다른 사람의 기회를 부당하게 빼앗는 결과가 돼요.'},
+      {label:'기억하기', title:'사소해 보여도', body:'작은 부탁도 반복되면 \'이 정도는 괜찮다\'는 문화가 되어 버려요. 그래서 처음부터 선을 긋는 게 중요해요.'},
+      {label:'요약', title:'핵심 키워드', chips:['절차 위반','특혜 요구','기회 박탈']}
+    ],
+    quiz: [
+      {text:'학부모가 담임 선생님께 자녀를 특정 동아리에 우선 배정해달라고 요청한다.', answer:true, explainT:'정해진 배정 절차를 건너뛰고 특혜를 요구한 부정청탁이에요.'},
+      {text:'학생이 선생님께 수행평가 기준이 무엇인지 정중하게 질문한다.', answer:false, explainF:'모두에게 필요한 정보를 요청한 정당한 질문이에요. 특혜와는 달라요.'},
+      {text:'반장 선거 후보가 친구들에게 "당선되면 매점 상품권을 주겠다"며 표를 부탁한다.', answer:true, explainT:'대가를 제공하며 공정한 선거 절차를 왜곡하려는 부정청탁이에요.'},
+      {text:'아파서 결석한 학생이 정해진 절차에 따라 보충 과제를 신청한다.', answer:false, explainF:'모든 학생에게 열려 있는 정당한 절차를 이용한 것뿐이에요.'},
+      {text:'학부모가 체육대회 계주 선수 선발에서 자기 아이를 무조건 넣어달라고 압박한다.', answer:true, explainT:'실력이나 기준과 무관하게 특정인을 넣어달라는 요구는 부정청탁이에요.'},
+      {text:'[경계선] 학생이 선생님께 "이번 시험 범위가 정확히 어디까지인지" 질문한다.', answer:false, explainF:'누구나 물어볼 수 있는 공개 정보에 대한 정당한 질문이에요.'},
+      {text:'[경계선] 전학생이 선배에게 "학교 적응하는 팁 좀 알려줄 수 있어?"라고 부탁한다.', answer:false, explainF:'개인적 특혜가 아니라 누구나 나눌 수 있는 일반적인 도움 요청이에요.'},
+      {text:'[경계선] 학부모가 "우리 아이가 원래 실력이 있으니, 특별전형에서 좀 더 유리하게 봐주시면 좋겠다"고 돌려서 말한다.', answer:true, explainT:'직접적으로 강하게 요구하지 않고 완곡하게 표현했더라도, 규정을 벗어난 특혜를 바란다는 점에서 부정청탁에 해당해요.'}
+    ],
+    resultMsg: '부정청탁은 대가가 크든 작든, 정해진 절차를 벗어나 특혜를 바라는 순간 성립해요. 완곡한 표현으로 포장되어도 마찬가지예요.',
+    reflectPrompt: '주변에서 부정청탁처럼 느껴졌던 부탁이나 장면이 있었다면, 무엇이 문제였는지 적어보세요.'
+  },
+  report: {
+    name: '공익신고',
+    sub: '모두의 이익을 지키기 위한 알림',
+    icon: '신',
+    colorVar: '--gold-deep',
+    colorDeepVar: '--gold-deep',
+    cards: [
+      {kind:'cover', title:'공익신고가 뭘까?', icon:'신'},
+      {label:'정의', title:'공익신고란', body:'다수의 이익을 해치는 부정한 행위를 알게 되었을 때, 이를 적절한 곳에 알리는 것을 말해요.'},
+      {label:'비유', title:'화재경보기라면?', body:'화재를 가장 먼저 발견한 사람이 경보기를 눌러야 모두가 안전하게 대피할 수 있어요. 공익신고도 비슷해요.'},
+      {label:'실생활 예시', title:'학교에서라면?', body:'시험지 유출을 우연히 목격한 학생이 선생님께 사실대로 알리는 것이 공익신고에 해당해요.'},
+      {label:'왜 중요한가', title:'침묵하면 반복돼요', body:'누구도 알리지 않으면 문제가 계속되고, 결국 더 많은 사람이 피해를 입게 돼요.'},
+      {label:'꼭 알아두기', title:'신고자는 보호받아야 해요', body:'사실을 알린 사람이 불이익을 당하거나 따돌림당하는 일은 있어서는 안 돼요. 이는 법과 학교 규정으로도 보호돼요.'},
+      {label:'요약', title:'핵심 키워드', chips:['공공의 이익','사실에 근거','신고자 보호']}
+    ],
+    quiz: [
+      {text:'시험지 유출을 목격한 학생이 선생님께 사실대로 알린다.', answer:true, explainT:'다수의 공정한 기회를 지키기 위해 사실을 알린 바람직한 공익신고예요.'},
+      {text:'친구의 사소한 지각을 매번 선생님께 일러바친다.', answer:false, explainF:'공공의 이익과는 관련 없는 개인적인 흠집 내기에 가까워요.'},
+      {text:'학교 예산이 부정하게 쓰이고 있다는 사실을 알게 되어 익명 게시판에 알린다.', answer:true, explainT:'다수가 낸 예산이 부정하게 쓰인다는 사실을 공개적으로 알린 정당한 공익신고예요.'},
+      {text:'친구와 사이가 나빠진 뒤, 그 친구의 개인적인 비밀을 폭로한다.', answer:false, explainF:'공공의 이익이 아니라 사적인 감정에서 나온 폭로로, 공익신고와는 달라요.'},
+      {text:'반 친구가 지속적으로 괴롭힘을 당하는 것을 보고 선생님께 알린다.', answer:true, explainT:'다른 사람의 안전과 관련된 사실을 알린 것으로, 공익신고의 취지에 맞아요.'},
+      {text:'[경계선] 친구의 부정행위를 목격했지만, "괜히 나섰다가 나까지 왕따당할까봐" 아무에게도 말하지 않는다.', answer:false, explainF:'침묵은 신고가 아니에요. 알고도 알리지 않으면 문제가 계속될 수 있어요.'},
+      {text:'[경계선] 확실하지 않은 소문만 듣고, 사실 확인 없이 곧바로 SNS에 이름을 밝혀 폭로한다.', answer:false, explainF:'근거 없이 개인을 특정해 폭로하는 것은 오히려 명예훼손이 될 수 있어요. 진짜 공익신고는 사실에 기반해 적절한 경로로 알리는 거예요.'},
+      {text:'[경계선] 신고 이후 보복성 따돌림을 당했지만, 포기하지 않고 계속 사실을 말하며 선생님과 부모님께 도움을 요청한다.', answer:true, explainT:'신고자는 보호받을 권리가 있고, 불이익 속에서도 사실에 근거해 대응을 이어가는 것은 바람직한 태도예요.'}
+    ],
+    resultMsg: '공익신고는 \'고자질\'이 아니에요. 사적인 감정이 아니라 다수의 이익을 지키기 위해, 사실에 근거해 알리는 것이 핵심이에요.',
+    reflectPrompt: '만약 친한 친구의 부정행위를 목격한다면, 나는 어떻게 행동할지 적어보세요.'
+  }
+};
+
+let currentModuleKey = null;
+let cnIdx = 0;
+let quizIdx = 0;
+let score = 0;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function buildHub(){
+  const list = document.getElementById('moduleList');
+  list.innerHTML = '';
+  Object.keys(MODULES).forEach(key=>{
+    const m = MODULES[key];
+    const btn = document.createElement('button');
+    btn.className = 'module-card m-' + key;
+    btn.innerHTML = `
+      <div class="module-icon">${m.icon}</div>
+      <div class="module-body">
+        <p class="module-name">${m.name}</p>
+        <p class="module-sub">${m.sub}</p>
+        <p class="module-meta">약 5~7분 · 카드뉴스 + 퀴즈</p>
+      </div>
+      <div class="module-check" id="check-${key}"></div>
+    `;
+    btn.addEventListener('click', ()=>startModule(key));
+    list.appendChild(btn);
+  });
+}
+
+function goHub(){
+  showScreen('screen-hub');
+}
+
+function startModule(key){
+  currentModuleKey = key;
+  cnIdx = 0;
+  quizIdx = 0;
+  score = 0;
+  showScreen('screen-cardnews');
+  renderCardNews();
+}
+
+function renderCardNews(){
+  const m = MODULES[currentModuleKey];
+  const cards = m.cards;
+  const c = cards[cnIdx];
+  const stage = document.getElementById('cnStage');
+  const isLast = cnIdx === cards.length - 1;
+
+  let inner;
+  if(c.kind === 'cover'){
+    inner = `
+      <div class="cn-card cn-cover">
+        <div class="cn-icon" style="background:var(${m.colorVar})">${c.icon}</div>
+        <p class="cn-title">${c.title}</p>
+        <p class="cn-body">카드를 넘기며 개념을 알아보세요</p>
+      </div>`;
+  } else if(c.chips){
+    inner = `
+      <div class="cn-card">
+        <p class="cn-eyebrow" style="color:var(${m.colorDeepVar})">${c.label}</p>
+        <p class="cn-title">${c.title}</p>
+        <div class="cn-chip-wrap">
+          ${c.chips.map(ch=>`<span class="cn-chip" style="background:var(${m.colorVar});color:#fff;">${ch}</span>`).join('')}
+        </div>
+      </div>`;
+  } else {
+    inner = `
+      <div class="cn-card">
+        <p class="cn-eyebrow" style="color:var(${m.colorDeepVar})">${c.label}</p>
+        <p class="cn-title">${c.title}</p>
+        <p class="cn-body">${c.body}</p>
+      </div>`;
+  }
+  stage.innerHTML = inner;
+
+  document.getElementById('cnDots').innerHTML = cards.map((_,i)=>
+    `<span class="dot ${i===cnIdx?'on':''}"></span>`).join('');
+
+  const prevBtn = document.getElementById('cnPrev');
+  const nextBtn = document.getElementById('cnNext');
+  prevBtn.disabled = cnIdx === 0;
+  nextBtn.textContent = isLast ? '퀴즈 풀기' : '다음';
+  nextBtn.style.background = `var(${m.colorVar})`;
+
+  const pct = Math.round(((cnIdx+1)/cards.length) * 45);
+  document.getElementById('cnProgressFill').style.width = pct + '%';
+  document.getElementById('cnProgressFill').style.background = `var(${m.colorVar})`;
+  document.getElementById('cnProgressLabel').textContent = (cnIdx+1) + '/' + cards.length;
+
+  prevBtn.onclick = ()=>{ if(cnIdx>0){ cnIdx--; renderCardNews(); } };
+  nextBtn.onclick = ()=>{
+    if(isLast){ showScreen('screen-quiz'); renderQuiz(); }
+    else { cnIdx++; renderCardNews(); }
+  };
+}
+
+function renderQuiz(){
+  const m = MODULES[currentModuleKey];
+  const quiz = m.quiz;
+  if(quizIdx >= quiz.length){ renderResult(); return; }
+  const q = quiz[quizIdx];
+  const stage = document.getElementById('quizStage');
+  const isBoundary = q.text.startsWith('[경계선]');
+  const displayText = isBoundary ? q.text.replace('[경계선] ', '') : q.text;
+
+  stage.innerHTML = `
+    <span class="quiz-tag" style="background:${isBoundary ? 'var(--gold)' : 'var(--line)'};color:${isBoundary ? '#fff' : 'var(--ink-soft)'}">${isBoundary ? '경계선 사례' : '기본 사례'}</span>
+    <p class="quiz-q">${displayText}</p>
+    <div class="ox-row">
+      <button class="ox-btn o-btn" id="oBtn">O<span>맞다고 생각해요</span></button>
+      <button class="ox-btn x-btn" id="xBtn">X<span>아니라고 생각해요</span></button>
+    </div>
+    <div class="feedback-box" id="feedback"></div>
+  `;
+
+  const pct = Math.round(((quizIdx)/quiz.length) * 100);
+  document.getElementById('qProgressFill').style.width = pct + '%';
+  document.getElementById('qProgressFill').style.background = `var(${m.colorVar})`;
+  document.getElementById('qProgressLabel').textContent = (quizIdx+1) + '/' + quiz.length;
+
+  const oBtn = document.getElementById('oBtn');
+  const xBtn = document.getElementById('xBtn');
+
+  function answer(picked){
+    const correct = picked === q.answer;
+    if(correct) score++;
+    oBtn.disabled = true; xBtn.disabled = true;
+    if(q.answer === true){ oBtn.classList.add('correct'); if(picked===false) xBtn.classList.add('wrong'); }
+    else { xBtn.classList.add('correct'); if(picked===true) oBtn.classList.add('wrong'); }
+
+    const fb = document.getElementById('feedback');
+    fb.style.display = 'block';
+    fb.style.borderLeftColor = correct ? 'var(--teal)' : 'var(--berry)';
+    const text = q.answer ? q.explainT : q.explainF;
+    fb.textContent = (correct ? '맞았어요. ' : '다시 볼까요. ') + text;
+
+    setTimeout(()=>{ quizIdx++; renderQuiz(); }, 1700);
+  }
+  oBtn.onclick = ()=>answer(true);
+  xBtn.onclick = ()=>answer(false);
+}
+
+function renderResult(){
+  const m = MODULES[currentModuleKey];
+  showScreen('screen-result');
+  const stage = document.getElementById('resultStage');
+  stage.innerHTML = `
+    <div class="result-score">
+      <p class="result-caption">${m.name} · 결과</p>
+      <p class="result-num">${score} / ${m.quiz.length}</p>
+      <p class="result-msg">${m.resultMsg}</p>
+    </div>
+    <p class="reflect-label">생각해보기</p>
+    <p class="reflect-sub">${m.reflectPrompt}</p>
+    <textarea id="reflectInput" placeholder="여기에 자유롭게 적어보세요"></textarea>
+    <div class="result-actions">
+      <button class="primary-btn" id="doneBtn">작성 완료</button>
+      <button class="secondary-btn" onclick="goHub()">다른 개념 학습하기</button>
+    </div>
+    <p class="saved-note" id="savedNote">작성해주셔서 고마워요. 선생님께 제출 방식은 별도 안내를 확인해주세요.</p>
+  `;
+  document.getElementById('doneBtn').onclick = ()=>{
+    document.getElementById('savedNote').style.display = 'block';
+    const check = document.getElementById('check-' + currentModuleKey);
+    if(check){
+      check.textContent = '✓';
+      check.style.fontWeight = '700';
+    }
+  };
+}
+
+buildHub();
+</script>
+</body>
+</html>
