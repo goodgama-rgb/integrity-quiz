@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부패한 왕국의 탐정</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1208;color:#f0e6c8;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* 시작 화면 */
+#start-screen{position:fixed;inset:0;background:#1a1208;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:2rem;text-align:center}
+#start-screen h1{font-size:48px;color:#f5c842;margin-bottom:8px;text-shadow:0 0 20px rgba(245,200,66,0.4)}
+#start-screen .sub{font-size:28px;color:#c9a96e;margin-bottom:2rem;line-height:1.7}
+.input-wrap{background:rgba(255,255,255,0.05);border:1px solid rgba(245,200,66,0.2);border-radius:16px;padding:1.5rem;width:100%;max-width:560px;margin-bottom:1rem}
+.input-wrap p{font-size:26px;color:#c9a96e;margin-bottom:10px}
+.name-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.name-row input,.name-input{width:100%;padding:10px 12px;border:1px solid rgba(245,200,66,0.3);border-radius:10px;font-size:28px;font-family:inherit;color:#f0e6c8;background:rgba(0,0,0,0.4)}
+.name-row input::placeholder,.name-input::placeholder{color:#7a6840}
+.name-row input:focus,.name-input:focus{outline:none;border-color:#f5c842}
+.name-input{margin-bottom:12px}
+.start-btn{width:100%;max-width:560px;padding:14px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:12px;font-size:32px;cursor:pointer;font-weight:700;font-family:inherit}
+.start-btn:hover{opacity:0.9}
+
+/* 게임 영역 */
+#game-wrap{display:none;flex-direction:column;align-items:center;width:100%;height:100vh}
+#hud{width:100%;max-width:660px;display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(0,0,0,0.7);border-bottom:1px solid rgba(245,200,66,0.2)}
+#hud .room-title{font-size:26px;color:#f5c842;font-weight:700}
+#hud .clues{margin-left:auto;display:flex;gap:8px;font-size:24px;color:#c9a96e}
+.clue-slot{padding:3px 10px;border:1px solid rgba(245,200,66,0.2);border-radius:20px;transition:all 0.3s}
+.clue-slot.found{border-color:#f5c842;color:#f5c842;background:rgba(245,200,66,0.1)}
+#hint-bar{width:100%;max-width:660px;font-size:24px;color:#c9a96e;padding:4px 16px;background:rgba(0,0,0,0.5);text-align:center;border-bottom:1px solid rgba(245,200,66,0.1);min-height:24px}
+#gameCanvas{display:block}
+
+/* 스테미나 바 */
+#stamina-wrap{width:100%;max-width:660px;display:flex;align-items:center;gap:10px;padding:6px 16px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(245,200,66,0.1)}
+#stamina-wrap span{font-size:20px;white-space:nowrap;color:#c9a96e}
+#stamina-track{flex:1;height:16px;background:rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;border:1px solid rgba(245,200,66,0.25)}
+#stamina-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5c842,#ff8a00);transition:width 0.08s linear,background 0.2s}
+#stamina-label{font-size:16px}
+
+/* 오브젝트 팝업 */
+#obj-popup{position:fixed;inset:0;background:rgba(8,5,0,0.93);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem}
+.obj-box{background:#1a1208;border:1px solid rgba(245,200,66,0.3);border-radius:18px;padding:1.75rem;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;animation:popIn 0.3s ease}
+@keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.obj-icon{font-size:40px;display:block;margin-bottom:12px;text-align:center}
+.obj-title{font-size:32px;font-weight:700;color:#f5c842;margin-bottom:12px;text-align:center}
+.obj-text{font-size:28px;color:#e8d5a3;line-height:1.9;margin-bottom:1.25rem;background:rgba(0,0,0,0.3);border-left:3px solid #f5c842;padding:1rem 1.25rem;border-radius:0 10px 10px 0;white-space:pre-line}
+.obj-clue{font-size:26px;padding:10px 14px;border-radius:10px;margin-bottom:1rem;background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.25);color:#f5c842;text-align:center;display:none}
+.obj-clue.show{display:block}
+.obj-btn{width:100%;padding:12px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:11px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit}
+.obj-btn:hover{opacity:0.9}
+
+/* 문 비밀번호 팝업 */
+#door-popup{position:fixed;inset:0;background:rgba(8,5,0,0.95);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem}
+.door-box{background:#1a1208;border:2px solid rgba(245,200,66,0.4);border-radius:18px;padding:1.75rem;max-width:640px;width:100%;animation:popIn 0.3s ease}
+.door-box h3{font-size:36px;font-weight:700;color:#f5c842;margin-bottom:8px;text-align:center}
+.door-box .door-desc{font-size:26px;color:#c9a96e;margin-bottom:1.5rem;text-align:center;line-height:1.7}
+.clues-summary{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem}
+.clue-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(245,200,66,0.15);font-size:26px;color:#888}
+.clue-item.found{border-color:rgba(245,200,66,0.35);color:#e8d5a3}
+.clue-item .ci-icon{font-size:36px;min-width:24px}
+.clue-item .ci-lock{margin-left:auto;font-size:26px;opacity:0.5}
+.pw-label{font-size:26px;color:#c9a96e;margin-bottom:8px}
+.pw-row{display:flex;gap:8px;margin-bottom:0}
+.pw-row input{flex:1;padding:12px;border:1px solid rgba(245,200,66,0.3);border-radius:10px;font-size:44px;font-family:inherit;color:#f5c842;background:rgba(0,0,0,0.4);text-align:center;letter-spacing:6px}
+.pw-row input:focus{outline:none;border-color:#f5c842}
+.pw-row input::placeholder{font-size:28px;letter-spacing:0;color:#5a4828}
+.pw-row button{padding:12px 20px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:10px;font-size:28px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap}
+.pw-fb{font-size:26px;padding:10px 14px;border-radius:10px;margin-top:10px;display:none;line-height:1.6}
+.pw-fb.ok{background:rgba(30,180,100,0.12);color:#80e0b0;border:1px solid rgba(30,180,100,0.3)}
+.pw-fb.wrong{background:rgba(200,60,60,0.1);color:#f08080;border:1px solid rgba(200,60,60,0.25)}
+.door-back{width:100%;padding:11px;background:rgba(255,255,255,0.06);color:#c9a96e;border:1px solid rgba(245,200,66,0.15);border-radius:10px;font-size:28px;cursor:pointer;font-family:inherit;margin-top:10px}
+.door-back:hover{background:rgba(255,255,255,0.1)}
+
+/* 방 전환 오버레이 */
+#transition{position:fixed;inset:0;background:#000;z-index:500;display:none;opacity:0;transition:opacity 0.6s}
+#transition.fade-in{opacity:1}
+
+/* 2번방 안내 */
+#room2-intro{position:fixed;inset:0;background:#0a0f1a;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+#room2-intro h2{font-size:44px;color:#60c8f0;margin-bottom:12px}
+#room2-intro p{font-size:28px;color:#a8c8e0;line-height:1.8;margin-bottom:2rem}
+#room2-intro button{padding:13px 32px;background:linear-gradient(135deg,#0a6080,#60c8f0);color:#0a0f1a;border:none;border-radius:12px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit}
+
+/* 탈출 시간 등급 카드 */
+#grade-wrap{width:100%;max-width:420px;background:rgba(192,128,255,0.06);border:1px solid rgba(192,128,255,0.3);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem}
+#grade-wrap h3{font-size:28px;color:#e0c0ff;margin-bottom:14px;text-align:center;letter-spacing:0.5px}
+#grade-badge{font-size:72px;font-weight:800;text-align:center;line-height:1;margin-bottom:6px;text-shadow:0 0 18px currentColor}
+#grade-title{font-size:28px;font-weight:700;text-align:center;margin-bottom:10px}
+#grade-desc{font-size:24px;color:#c8b0e0;text-align:center;line-height:1.6}
+
+/* 화면(팝업) 흔들림 연출 */
+@keyframes shakeFx{
+  0%{transform:translate(0,0)}
+  20%{transform:translate(-6px,3px)}
+  40%{transform:translate(5px,-4px)}
+  60%{transform:translate(-4px,4px)}
+  80%{transform:translate(4px,-2px)}
+  100%{transform:translate(0,0)}
+}
+.shake{animation:shakeFx 0.4s ease}
+</style>
+<!-- Firebase SDK (v9 compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- 시작 화면 -->
+<div id="start-screen">
+  <div style="font-size:52px;margin-bottom:12px">🕵️</div>
+  <h1>부패한 왕국의 탐정</h1>
+  <p class="sub">방 안을 돌아다니며 단서를 찾아라!<br>화살표 키로 이동 | 오브젝트에 가까이 가면 자동으로 조사</p>
+  <div class="input-wrap">
+    <p>탐정 신원을 입력해주세요.</p>
+    <div class="name-row">
+      <input type="number" id="ig" placeholder="학년" min="1" max="3">
+      <input type="number" id="ic" placeholder="반" min="1" max="30">
+      <input type="number" id="in" placeholder="번호" min="1" max="50">
+    </div>
+    <input class="name-input" type="text" id="iname" placeholder="이름">
+    <button class="start-btn" onclick="startGame()">🕵️ 수사 시작하기</button>
+  </div>
+</div>
+
+<!-- 1번방 시작 전 안내 (2단계) -->
+<div id="room1-intro-a" style="position:fixed;inset:0;background:#1a1208;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div style="font-size:52px;margin-bottom:16px">😰</div>
+  <p style="font-size:28px;color:#e8d5a3;line-height:1.8;margin-bottom:2rem;max-width:600px">"너무 어둡다... 손전등만으로는<br>방 안이 잘 보이지 않는다.<br><br>LED 랜턴처럼 밝은 게 있으면 좋을 텐데..."</p>
+  <button onclick="showRoom1IntroB()" style="padding:13px 32px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:12px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit">다음</button>
+</div>
+<div id="room1-intro-b" style="position:fixed;inset:0;background:#1a1208;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div style="font-size:52px;margin-bottom:16px">🔦</div>
+  <p style="font-size:28px;color:#f5c842;line-height:1.8;margin-bottom:2rem;max-width:600px">"뭔가 빛을 비출 만한 것을 찾자."</p>
+  <button onclick="beginRoom1()" style="padding:13px 32px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:12px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit">탐색 시작</button>
+</div>
+
+<!-- 게임 -->
+<div id="game-wrap">
+  <div id="hud">
+    <span class="room-title" id="room-title">🚪 1번 방 — 청렴의 방</span>
+    <div class="clues" id="clue-slots">
+      <span class="clue-slot" id="cs0">단서1 🔒</span>
+      <span class="clue-slot" id="cs1">단서2 🔒</span>
+      <span class="clue-slot" id="cs2">단서3 🔒</span>
+    </div>
+  </div>
+  <div id="stamina-wrap">
+    <span>⚡</span>
+    <div id="stamina-track"><div id="stamina-fill"></div></div>
+    <span id="stamina-label">달리기: Space+방향키</span>
+  </div>
+  <div id="hint-bar">💡 화살표 키로 이동 | 오브젝트에 가까이 가면 자동으로 조사됩니다</div>
+  <canvas id="gameCanvas"></canvas>
+</div>
+
+<!-- 오브젝트 팝업 -->
+<div id="obj-popup">
+  <div class="obj-box">
+    <span class="obj-icon" id="op-icon">📚</span>
+    <div class="obj-title" id="op-title"></div>
+    <div class="obj-text" id="op-text"></div>
+    <div class="obj-clue" id="op-clue"></div>
+    <button class="obj-btn" onclick="closeObjPopup()">확인</button>
+  </div>
+</div>
+
+<!-- 문 비밀번호 팝업 -->
+<div id="door-popup">
+  <div class="door-box">
+    <h3>🚪 잠긴 문</h3>
+    <p class="door-desc">이 문은 <strong style="color:#f5c842">4자리 비밀번호</strong>로 잠겨 있다.<br>방 안의 단서들을 조합하라.</p>
+    <div class="clues-summary" id="clues-summary"></div>
+    <div class="pw-label">비밀번호 입력 (4자리)</div>
+    <div class="pw-row">
+      <input type="text" id="pw-input" placeholder="단서를 찾아라" maxlength="4">
+      <button onclick="checkDoorPW()">열기</button>
+    </div>
+    <div class="pw-fb" id="pw-fb"></div>
+    <button class="door-back" onclick="closeDoorPopup()">← 방으로 돌아가기</button>
+  </div>
+</div>
+
+<!-- 방 전환 어둠 -->
+<div id="transition"></div>
+
+<!-- 2번방 입장 안내 -->
+<div id="room2-intro" style="position:fixed;inset:0;background:#0a150a;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div style="font-size:52px;margin-bottom:16px">🚪</div>
+  <h2 style="font-size:44px;color:#60e080;margin-bottom:12px">2번 방 — 증거의 방</h2>
+  <p style="font-size:28px;color:#a0c8a0;line-height:1.8;margin-bottom:2rem">문이 열렸습니다! 어두운 계단을 내려가<br>지하 기록 보관소로 들어섰습니다.<br><br>이곳에는 부패한 귀족들의 범행 기록이 봉인되어 있습니다.<br>단서를 찾아 이 방도 탈출하세요!</p>
+  <button onclick="enterRoom2()" style="padding:13px 32px;background:linear-gradient(135deg,#1a5020,#60e080);color:#0a150a;border:none;border-radius:12px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit">방 안으로 들어가기 →</button>
+</div>
+
+<!-- 3번방 입장 안내 -->
+<div id="room3-intro" style="position:fixed;inset:0;background:#100a1a;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div style="font-size:52px;margin-bottom:16px">🚪</div>
+  <h2 style="font-size:44px;color:#c080f0;margin-bottom:12px">3번 방 — 대결의 방</h2>
+  <p style="font-size:28px;color:#c0a0e0;line-height:1.8;margin-bottom:2rem">마지막 방으로 들어섰습니다.<br>이곳에는 부패한 귀족 3명의 초상화가 걸려 있습니다.<br><br>⚔️ 각 귀족에게 다가가 <strong style="color:#c080f0">"청렴-부패 대결"(퀴즈 5문제)</strong>을 신청하세요.<br>5문제를 모두 맞히면 승리하고 숫자를 하나 얻습니다.<br>하나라도 틀리면 1번 문제부터 다시 도전해야 합니다!<br><br>세 귀족에게서 얻은 숫자를 순서대로 이어붙이면 문의 비밀번호가 됩니다.</p>
+  <button onclick="enterRoom3()" style="padding:13px 32px;background:linear-gradient(135deg,#3a1060,#c080f0);color:#100a1a;border:none;border-radius:12px;font-size:30px;cursor:pointer;font-weight:700;font-family:inherit">방 안으로 들어가기 →</button>
+</div>
+
+<!-- 최종 탈출 성공 -->
+<div id="final-clear" style="position:fixed;inset:0;background:#0a0010;z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div style="font-size:64px;margin-bottom:16px">🎉</div>
+  <h1 style="font-size:52px;color:#c080f0;margin-bottom:12px;text-shadow:0 0 20px rgba(192,128,255,0.5)">부패한 왕국에서 탈출했습니다!</h1>
+  <p style="font-size:28px;color:#c0a0e0;line-height:1.9;margin-bottom:1.5rem">
+    세 방의 수사를 모두 완료하고<br>왕국의 부패를 세상에 알렸습니다.<br><br>
+    청렴(淸廉)한 사회는 우리 모두가 만들어가는 것입니다.
+  </p>
+  <div style="background:rgba(192,128,255,0.1);border:1px solid rgba(192,128,255,0.3);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;font-size:26px;color:#c0a0e0;white-space:pre-line;line-height:1.8" id="final-score"></div>
+
+  <!-- 탈출 시간 등급 -->
+  <div id="grade-wrap">
+    <h3>🏅 나의 청렴 수사관 등급</h3>
+    <div id="grade-badge"></div>
+    <div id="grade-title"></div>
+    <div id="grade-desc"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Firebase 설정 — 아래 값을 본인의 Firebase 프로젝트 설정으로 교체하세요.
+// (Firebase 콘솔 > 프로젝트 설정 > 일반 > 내 앱 > SDK 설정 및 구성 에서 확인 가능)
+// ============================================================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+// Firebase SDK 로딩에 실패하거나(네트워크 차단 등) 설정값이 비어 있어도
+// 게임 자체(이동/퍼즐/방탈출)는 항상 정상 동작해야 하므로 반드시 try/catch로 감싼다.
+// 이 부분에서 예외가 그대로 던져지면 스크립트 전체 실행이 중단되어
+// 아래에 있는 방/오브젝트 데이터가 전혀 만들어지지 않고, 결과적으로
+// 게임 화면이 캔버스에 아무것도 그려지지 않은 "까만 화면"이 되어버린다.
+var db = null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } else {
+    console.warn('Firebase SDK를 불러오지 못했습니다(네트워크 확인). 저장/랭킹 기능은 비활성화되고 게임은 정상 진행됩니다.');
+  }
+}catch(e){
+  console.error('Firebase 초기화 실패(게임 진행에는 영향 없음):',e);
+}
+
+var student = {grade:'',cls:'',num:'',name:''};
+var gameStartTime = 0;
+var TILE = 40;
+var ROOM_SCALE = 5; // 방 크기를 화면 대비 가로/세로 5배로 확장
+var W, H, cols, rows;
+var canvas, ctx;
+var lightCanvas, lightCtx; // 손전등 마스크 전용 오프스크린 캔버스
+var player = {x:0, y:0, facing:'right'};
+var pressed = {};
+var camera = {x:0, y:0}; // 플레이어를 항상 화면 중앙에 두는 카메라(월드 좌표계)
+
+// ── 비주얼 연출용 상태 ──
+var lightSources = [];         // 이번 프레임에 켜진 광원(횃불/촛불) 목록
+var lightPos = {x:0, y:0};     // 손전등이 실제로 향하는 위치(플레이어를 부드럽게 추적, 월드 좌표)
+var floatingTexts = [];        // 획득 연출 텍스트
+var shakeFrames = 0, shakeMag = 0; // 캔버스 화면 흔들림
+var inPopup = false;
+var cluesFound = [false, false, false];
+var cluesFound2 = [false, false, false, false];
+var lastTriggered = -1;
+var lastDoorTriggered = false;
+var lastHintTriggered = -1;
+var currentRoom = 1;
+var mapBuilt = false;
+
+// ── LED 랜턴 아이템 ── 스폰 지점 동서남북 근처에 4개를 두어 금방 찾을 수 있게 한다
+var SPAWN_TILE_OFFSET = 7; // 플레이어 시작 위치(왼쪽 위 구석에서 몇 칸 안쪽인지)
+var lanternObjs = [{col:0,row:0},{col:0,row:0},{col:0,row:0},{col:0,row:0}]; // buildMap에서 동적 설정(동/서/남/북)
+var lanternPicked = false, lanternOn = false, lastLanternTriggered = false;
+var FLASH_RADIUS_NORMAL = 150, FLASH_RADIUS_LANTERN = 300;
+
+// ── 달리기(스프린트) & 스테미나 ──
+var STAMINA_MAX = 100;
+var STAMINA_DRAIN_PER_FRAME = STAMINA_MAX/300; // 10초(30fps 기준) 만에 완전 소모
+var STAMINA_RECOVER_PER_FRAME = STAMINA_MAX/300; // 10초 만에 완전 회복
+var stamina = STAMINA_MAX;
+var isRunning = false;
+var RUN_MULTIPLIER = 1.8;
+
+var ROOM1_PW = '1125';
+var ROOM2_PW = '11160863';
+var ROOM3_PW = '248'; // 귀족 3명에게서 얻는 숫자(2,4,8)를 순서대로 이어붙인 값
+
+var cluesFound3 = [false,false,false]; // 귀족 3명 각각 대결에서 승리했는지 여부
+
+// 3번방 오브젝트 — 부패한 귀족 3명의 초상화. 다가가면 "청렴-부패 대결"(퀴즈 5문제)을 신청할 수 있다.
+// 5문제를 모두 맞히면 승리하며 숫자를 하나 얻는다. 하나라도 틀리면 1번 문제부터 다시 도전해야 한다.
+var room3Objects = [
+  {
+    id:30, emoji:'🖼️', label:'황금손 대감',
+    col:3, row:2,
+    title:'황금손 대감의 초상화',
+    corruptType:'뇌물 · 청탁',
+    quizType:'ox',
+    text:'황금손 대감은 뇌물과 청탁으로 재산을 불려온 것으로 악명 높다.\n\n"내게 온 재물이 얼마인지 아느냐? 흐흐... 청렴이 다 무엇이냐, 세상은 원래 이렇게 돌아가는 것이다!"\n\n형법 제129조는 공무원 또는 중재인이 직무에 관하여 뇌물을 수수·요구·약속하면 5년 이하의 징역 또는 10년 이하의 자격정지에 처하도록 정하고 있다. 뇌물 액수가 1억원 이상이면 특정범죄가중처벌법에 따라 무기 또는 10년 이상의 징역까지 가능하다.\n\n황금손 대감에게 "청렴-부패 대결"을 신청해 죄를 낱낱이 밝혀라. OX 문제 5개를 모두 맞히면 승리한다!',
+    questions:[
+      {q:'공무원이 직무와 관련하여 뇌물을 실제로 받지 않고 요구만 했어도 뇌물죄(형법 제129조)가 성립한다.', answer:'O'},
+      {q:'뇌물을 준 사람은 처벌받지 않고, 받은 공무원만 처벌받는다.', answer:'X'},
+      {q:'청탁금지법(김영란법)에서 식사 접대는 1인당 3만원까지 허용된다.', answer:'O'},
+      {q:'뇌물 수수액이 1억원 이상이면 특정범죄가중처벌법에 따라 무기 또는 10년 이상의 징역에 처할 수 있다.', answer:'O'},
+      {q:'직무와 전혀 관련 없는 순수한 사적 친구 사이의 선물 교환도 모두 형법상 뇌물죄에 해당한다.', answer:'X'}
+    ],
+    reward:'2',
+    clue:'🏅 대결 승리! 황금손 대감에게서 숫자 [2]를 획득했습니다.',
+    clueIdx:0
+  },
+  {
+    id:31, emoji:'🖼️', label:'곳간지기 영감',
+    col:11, row:3,
+    title:'곳간지기 영감의 초상화',
+    corruptType:'횡령 · 공금유용',
+    quizType:'4c',
+    text:'곳간지기 영감은 나라의 곳간(창고, 즉 공금)을 관리하며 몰래 빼돌린 재물로 배를 채워왔다.\n\n"곳간 열쇠는 내가 쥐고 있으니, 조금씩 빼돌린들 누가 알겠느냐?"\n\n형법 제355조(횡령)와 제356조(업무상횡령)는 타인의 재물이나 공금을 보관하는 자가 이를 불법으로 사용하면 처벌하도록 정하고 있으며, 특정경제범죄 가중처벌법은 그 이득액이 클수록 형을 더욱 무겁게 가중한다.\n\n곳간지기 영감에게 대결을 신청해 횡령을 밝혀라. 4지선다 문제 5개를 모두 맞히면 승리한다!',
+    questions:[
+      {q:'형법에서 "업무상횡령죄"의 법정형은?', options:['5년 이하의 징역 또는 1,500만원 이하의 벌금','10년 이하의 징역 또는 3,000만원 이하의 벌금','3년 이하의 징역 또는 500만원 이하의 벌금','무기 또는 5년 이상의 징역'], answer:1},
+      {q:'공금(횡령 이득액)이 5억원 이상 50억원 미만일 때, 특정경제범죄 가중처벌법상 처벌은?', options:['1년 이상의 유기징역','무기징역만 가능하다','3년 이상의 유기징역','벌금형만 가능하다'], answer:2},
+      {q:'국가나 지방자치단체의 예산(공금)을 본래 목적과 다르게 사적으로 사용하는 행위를 형법상 무엇이라 하는가?', options:['배임죄','사기죄','직권남용죄','업무상횡령죄'], answer:3},
+      {q:'특정경제범죄 가중처벌법상 횡령·배임 이득액이 50억원 이상일 때 처벌은?', options:['5년 이하의 징역','무기 또는 5년 이상의 징역','3년 이상의 유기징역','벌금 5,000만원 이하'], answer:1},
+      {q:'공무원이 공금을 사적으로 사용했다가 나중에 다시 채워 넣었다면, 횡령죄는 어떻게 되는가?', options:['돌려놨으므로 처음부터 성립하지 않는다','반환하면 무조건 처벌을 받지 않는다','사용한 시점에 이미 성립하며, 반환해도 죄는 소멸하지 않는다','공무원은 예외적으로 처벌 대상이 아니다'], answer:2}
+    ],
+    reward:'4',
+    clue:'🏅 대결 승리! 곳간지기 영감에게서 숫자 [4]를 획득했습니다.',
+    clueIdx:1
+  },
+  {
+    id:32, emoji:'🖼️', label:'청탁왕 판서',
+    col:4, row:7,
+    title:'청탁왕 판서의 초상화',
+    corruptType:'일상 속 청렴 감수성',
+    quizType:'4c',
+    text:'청탁왕 판서는 근엄한 표정으로 마지막 관문을 지키고 있다.\n\n"법 조항 몇 개 외운다고 청렴한 것이 아니다. 진짜 청렴은 아무도 보지 않는 사소한 순간에 드러나는 법. 네가 평소에도 정말 청렴하게 살고 있는지, 내가 직접 시험해보겠다."\n\n조별 과제 무임승차, 출처 없이 자료 베끼기, 친구의 부정행위 방조, "나 하나쯤이야"라는 안일함, 아무도 보지 않을 때의 선택까지 — 청렴은 거창한 법 조항이 아니라 우리의 일상 속 작은 판단에서 시작된다.\n\n청탁왕 판서에게 마지막 대결을 신청해 진짜 청렴한 사람임을 증명하라. 4지선다 문제 5개를 모두 맞혀야 승리한다!',
+    questions:[
+      // 가치 원리: 청렴은 사적 감정(우정)에 치우치지 않고 공정하게 행동하는 것
+      {q:'수행평가 조별 과제를 하는데, 친한 친구가 아무런 참여도 하지 않았습니다. 하지만 친구가 "이번에 점수 잘 못 받으면 부모님께 진짜 혼난다"며 이름을 넣어달라고 간절히 부탁합니다. 이때 친구의 이름을 조원으로 넣어주는 행동은 어떤 행동일까요?',
+       options:['친구와의 의리를 멋지게 지켜낸 청렴한 행동이다.','불쌍한 친구를 도와준 선행이므로 청렴과는 무관하다.','열심히 참여한 다른 조원들의 노력을 빼앗는 불공정한 행동이다.','선생님께 걸리지만 않으면 아무런 문제가 없는 행동이다.'],
+       answer:2},
+      // 가치 원리: 청렴의 핵심 덕목인 '정직' — 디지털 공간에서도 타인의 노력과 저작권을 존중해야 함
+      {q:'학교 숙제를 하던 중, 인터넷에서 내가 찾던 완벽한 발표 자료를 발견했습니다. 출처를 밝히지 않고 마치 내가 직접 쓴 것처럼 그대로 복사해서 제출하면서 "아무도 안 보니까 괜찮아"라고 생각했습니다. 이 행동에 대한 올바른 설명은 무엇일까요?',
+       options:['인터넷 정보는 누구나 쓸 수 있으므로 완벽히 청렴한 행동이다.','요즘 친구들도 다 쓰는 방법이므로 전혀 문제 되지 않는다.','과제의 양을 채우기 위한 영리한 요령일 뿐이다.','타인의 노력과 권리를 출처 없이 가로챈 부정직한 행동이다.'],
+       answer:3},
+      // 가치 원리: 진정한 우정은 친구의 잘못을 방조하는 것이 아니라 올바른 길을 함께 가는 것
+      {q:'내일이 마감인 숙제를 깜빡한 친구가 애원합니다. "야, 너 숙제한 것 좀 사진 찍어서 보내줘. 베끼고 바로 지울게!" 이때 숙제를 보여주는 행동에 대한 올바른 시각은 무엇일까요?',
+       options:['친구가 곤경에서 벗어나도록 도운 진정한 우정이다.','친구의 수행평가 점수를 올려주기 위한 선의의 행동이다.','정당하게 노력한 결과를 왜곡하는 부정행위 조장이다.','숙제를 안 해온 친구의 잘못이므로 나에게는 아무 책임이 없다.'],
+       answer:2},
+      // 가치 원리: 부패는 어른들만의 문제가 아니라, "나 하나쯤이야"라는 내 안의 작은 타협에서 시작됨
+      {q:'우리가 흔히 말하는 \'청렴\'의 반댓말은 \'부패\'입니다. 그렇다면 우리 중학생들의 일상 속에서 \'청렴\'을 가로막는 가장 큰 원인은 무엇일까요?',
+       options:['엄청나게 큰돈을 탐내는 욕심','규칙을 엄격하게 적용하는 깐깐함','"나 하나쯤이야"라고 생각하는 무관심과 안일함','높은 자리에 올라가 권력을 쥐려는 마음'],
+       answer:2},
+      // 가치 원리: 청렴의 완성은 감시·처벌이 아니라 아무도 보지 않을 때도 지키는 자율성(양심)
+      {q:'늦잠을 자서 지각 위기에 처했습니다. 마침 횡단보도에 차도 없고, 단속 카메라도 없고, 주변에 보는 사람도 전혀 없습니다. 이때 빨간불에 길을 건너는 행동과 \'청렴\'의 관계는 무엇일까요?',
+       options:['보는 사람이 없으므로 나의 청렴이나 양심과는 아무 상관이 없다.','지각을 면하기 위한 급박한 상황이므로 정당화될 수 있다.','아무도 보지 않을 때도 스스로 규칙을 지키는 \'양심\'과 관련이 깊다.','경찰관에게 들켜서 벌금을 내지만 않는다면 청렴한 행동이다.'],
+       answer:2}
+    ],
+    reward:'8',
+    clue:'🏅 대결 승리! 청탁왕 판서에게서 숫자 [8]를 획득했습니다.',
+    clueIdx:2
+  }
+];
+
+// 1번방 오브젝트
+var room1Objects = [
+  {
+    id:0, emoji:'📚', label:'책장',
+    col:3, row:3,
+    title:'낡은 책장',
+    text:'먼지가 쌓인 책장. 한 권을 꺼내자 안쪽에 쪽지가 끼워져 있다.\n\n"청렴(淸廉)... 청렴의 청은 맑을 청(淸)이다."',
+    clue:'🔍 단서 1 획득 — 맑을 청(淸)',
+    clueIdx:0
+  },
+  {
+    id:1, emoji:'🖼️', label:'초상화',
+    col:11, row:2,
+    title:'벽에 걸린 초상화',
+    text:'부패한 귀족의 초상화. 이름 부분이 칼로 긁혀 지워져 있다.\n\n그 아래 붉은 글씨로 새겨진 문구:\n"청렴한 자는 이곳에 들어올 수 없다.\n청렴의 반대말을 알고 있느냐?"',
+    clue:'🔍 단서 2 획득 — 청렴의 반대말',
+    clueIdx:1
+  },
+  {
+    id:2, emoji:'🗒️', label:'바닥 쪽지',
+    col:7, row:7,
+    title:'바닥에 구겨진 쪽지',
+    text:'부패한 귀족이 남긴 것으로 보이는 메모.\n\n"올해도 담당 선생님께 선물을 드렸다.\n법에서 허용하는 최대 금액만큼만.\n들키지 않으려면 딱 그 선을 지켜야 해."',
+    clue:'🔍 단서 3 획득 — 허용 최대 선물 금액',
+    clueIdx:2
+  }
+];
+
+// 2번방 오브젝트
+var room2Objects = [
+  {
+    id:10, emoji:'📜', label:'판결문',
+    col:3, row:3,
+    title:'낡은 판결문',
+    text:'빛바랜 판결문. 판사의 도장이 찍혀 있다.\n\n"공익신고자보호법은 부패와 공익 침해 행위를 신고한 자를 보호하기 위해 제정되었으며, 2011년부터 시행되었다."',
+    clue:'🔍 단서 1 획득 — 공익신고자보호법 시행 연도',
+    clueIdx:0
+  },
+  {
+    id:11, emoji:'⚖️', label:'저울',
+    col:11, row:2,
+    title:'먼지 쌓인 저울',
+    text:'정의의 저울. 한쪽엔 금화가, 다른 쪽엔 두루마리가 놓여 있다.\n\n두루마리에 적힌 글:\n"부정청탁 및 금품 등 수수의 금지에 관한 법률, 일명 청탁금지법은 2016년부터 시행되었다."',
+    clue:'🔍 단서 2 획득 — 청탁금지법 시행 연도',
+    clueIdx:1
+  },
+  {
+    id:12, emoji:'📖', label:'기록부',
+    col:4, row:8,
+    title:'두꺼운 기록부',
+    text:'왕국 기관 설립 기록부. 먼지를 털어내고 펼쳤다.\n\n"부패방지 및 국민권익위원회의 설치와 운영에 관한 법률에 따라 국민권익위원회는 2008년 설립되었다."',
+    clue:'🔍 단서 3 획득 — 국민권익위원회 설립 연도',
+    clueIdx:2
+  },
+  {
+    id:13, emoji:'📊', label:'보고서',
+    col:10, row:7,
+    title:'국제 보고서',
+    text:'국제투명성기구(TI)의 보고서.\n\n"2023년 부패 인식 지수(CPI) 조사 결과,\n대한민국은 100점 만점에 63점을 기록하였다."',
+    clue:'🔍 단서 4 획득 — 2023년 한국 CPI 점수',
+    clueIdx:3
+  }
+];
+
+// 1번방 힌트 상자 (각 단서 근처에 배치, buildMap에서 위치 동적 설정)
+var room1Hints = [
+  {
+    id:'r1h0', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 1',
+    text:'청렴(淸廉)은 맑을 청(淸)과 청렴할 렴(廉)으로 이루어져 있다.\n\n청렴할 렴(廉)의 획수는 13획이다.'
+  },
+  {
+    id:'r1h1', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 2',
+    text:'부패를 방지하고 청렴 문화를 확산하며 국민의 고충을 처리하는 기관을 국민권익위원회라고 한다.\n\n국민권익위원회는 7글자다.'
+  },
+  {
+    id:'r1h2', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 3',
+    text:'김영란법(청탁금지법)에 따르면\n선물 허용 최대 금액은 5만원이다.\n(농축수산물은 15만원)'
+  }
+];
+
+// 2번방 힌트 상자 (각 단서 근처에 배치)
+var room2Hints = [
+  {
+    id:'r2h0', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 1',
+    text:'공익신고자보호법은 2011년에 시행되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
+  },
+  {
+    id:'r2h1', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 2',
+    text:'청탁금지법(김영란법)은 2016년부터 시행되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
+  },
+  {
+    id:'r2h2', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 3',
+    text:'국민권익위원회는 2008년에 설립되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
+  },
+  {
+    id:'r2h3', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 단서 4',
+    text:'국제투명성기구 CPI 점수는 100점 만점 기준\n두 자리 숫자로 발표된다.'
+  }
+];
+
+// 3번방 힌트 상자 (각 귀족과의 대결에 도움이 되는 보조 힌트)
+var room3Hints = [
+  {
+    id:'r3h0', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 황금손 대감',
+    text:'뇌물죄는 형법 제129조에 규정되어 있으며,\n받은 돈만이 아니라 요구하거나 약속한 것만으로도 죄가 성립한다.\n뇌물죄를 준 사람도 증뢰죄(형법 제133조)로 함께 처벌받는다.'
+  },
+  {
+    id:'r3h1', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 곳간지기 영감',
+    text:'횡령죄는 형법 제355조, 업무상횡령죄는 제356조에 규정되어 있다.\n횡령한 금액이 클수록 특정경제범죄 가중처벌법에 따라\n더 무거운 처벌을 받는다.'
+  },
+  {
+    id:'r3h2', emoji:'📦', label:'힌트',
+    col:0, row:0,
+    title:'📦 힌트 — 청탁왕 판서',
+    text:'청렴은 큰 뇌물 사건에만 있는 게 아니다.\n조별 과제 무임승차, 출처 없이 베끼기, 부정행위 눈감아주기처럼\n일상의 작은 선택에서도 청렴은 드러난다. "나 하나쯤이야"를 조심하자.'
+  }
+];
+
+function getHintObjects(){
+  if(currentRoom===1) return room1Hints;
+  if(currentRoom===2) return room2Hints;
+  return room3Hints;
+}
+
+// 현재 방 문 위치 (오른쪽 벽 중앙)
+var doorPos = {col:0, row:0};
+
+function startGame(){
+  var g=document.getElementById('ig').value.trim();
+  var c=document.getElementById('ic').value.trim();
+  var n=document.getElementById('in').value.trim();
+  var nm=document.getElementById('iname').value.trim();
+  if(!g||!c||!n||!nm){alert('모든 정보를 입력해주세요!');return;}
+  student={grade:g,cls:c,num:n,name:nm};
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('room1-intro-a').style.display='flex';
+}
+
+function showRoom1IntroB(){
+  document.getElementById('room1-intro-a').style.display='none';
+  document.getElementById('room1-intro-b').style.display='flex';
+}
+
+function beginRoom1(){
+  document.getElementById('room1-intro-b').style.display='none';
+  document.getElementById('game-wrap').style.display='flex';
+  gameStartTime=Date.now(); // 안내 팝업을 읽는 시간은 기록 시간에서 제외
+  initGame();
+}
+
+function formatTime(seconds){
+  var m=Math.floor(seconds/60);
+  var s=seconds%60;
+  var mm=(m<10?'0':'')+m;
+  var ss=(s<10?'0':'')+s;
+  return mm+':'+ss;
+}
+
+function initGame(){
+  canvas=document.getElementById('gameCanvas');
+  ctx=canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+  window.addEventListener('keydown',function(e){
+    pressed[e.key]=true;
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key)>=0) e.preventDefault();
+    if((e.key==='l'||e.key==='L')&&lanternPicked&&!inPopup){
+      lanternOn=!lanternOn;
+      document.getElementById('hint-bar').textContent=lanternOn?'🔦 랜턴 ON — 더 넓은 범위가 보입니다':'🔦 랜턴 OFF — L 키로 다시 켤 수 있습니다';
+    }
+  });
+  window.addEventListener('keyup',function(e){pressed[e.key]=false;});
+  setInterval(gameLoop,1000/30);
+}
+
+function resizeCanvas(){
+  var hudH=document.getElementById('hud').offsetHeight+document.getElementById('hint-bar').offsetHeight;
+  W=Math.min(660,window.innerWidth);
+  H=window.innerHeight-hudH;
+  canvas.width=W; canvas.height=H;
+  // 방(맵) 크기는 화면(뷰포트) 크기의 ROOM_SCALE배 — 카메라가 그 안의 일부만 비춘다
+  var viewCols=Math.floor(W/TILE), viewRows=Math.floor(H/TILE);
+  cols=viewCols*ROOM_SCALE; rows=viewRows*ROOM_SCALE;
+  mapBuilt=false;
+  if(player.x===0&&player.y===0){
+    player.x=TILE*SPAWN_TILE_OFFSET;
+    player.y=TILE*SPAWN_TILE_OFFSET;
+  }
+  // 손전등 마스크용 오프스크린 캔버스 (메인 캔버스와 분리해 안전하게 처리)
+  if(!lightCanvas) lightCanvas=document.createElement('canvas');
+  lightCanvas.width=W; lightCanvas.height=H;
+  lightCtx=lightCanvas.getContext('2d');
+}
+
+// 플레이어를 항상 화면 중앙에 두되, 맵 가장자리를 벗어나지 않도록 고정
+function updateCamera(){
+  var mapW=cols*TILE, mapH=rows*TILE;
+  var tx=player.x+TILE/2-W/2, ty=player.y+TILE/2-H/2;
+  camera.x=Math.max(0,Math.min(tx,Math.max(0,mapW-W)));
+  camera.y=Math.max(0,Math.min(ty,Math.max(0,mapH-H)));
+}
+
+var mapData=[];
+function buildMap(){
+  mapData=[];
+  var r,c;
+  for(r=0;r<rows;r++){
+    mapData[r]=[];
+    for(c=0;c<cols;c++){
+      if(r===0||r===rows-1||c===0||c===cols-1) mapData[r][c]=1;
+      else mapData[r][c]=0;
+    }
+  }
+
+  // 맵 비율(f: 0~1) 기준 좌표를 안전 범위(벽에서 최소 3칸)로 잘라주는 헬퍼
+  function fx(f){return Math.max(3,Math.min(cols-4,Math.floor(cols*f)));}
+  function fy(f){return Math.max(3,Math.min(rows-4,Math.floor(rows*f)));}
+
+  // 문 위치: 오른쪽 벽 중앙
+  doorPos.col=cols-1;
+  doorPos.row=Math.floor(rows/2);
+
+  // 플레이어는 항상 왼쪽 위 구석(fx(0.05),fy(0.05) 부근)에서 시작하므로,
+  // 단서/힌트/랜턴은 그 구석에서 최대한 멀리, 서로도 멀리 떨어뜨려 배치한다.
+
+  // 1번방: 단서 3개
+  room1Objects[0].col=fx(0.5);  room1Objects[0].row=fy(0.15);
+  room1Objects[1].col=fx(0.85); room1Objects[1].row=fy(0.5);
+  room1Objects[2].col=fx(0.4);  room1Objects[2].row=fy(0.85);
+  // 1번방 힌트 상자 (각 단서에서 3~4칸 떨어진 곳)
+  room1Hints[0].col=fx(0.5)+4;  room1Hints[0].row=fy(0.15)+4;
+  room1Hints[1].col=fx(0.85)-4; room1Hints[1].row=fy(0.5)+4;
+  room1Hints[2].col=fx(0.4)+4;  room1Hints[2].row=fy(0.85)-4;
+
+  // 2번방: 단서 4개
+  room2Objects[0].col=fx(0.5);  room2Objects[0].row=fy(0.15);
+  room2Objects[1].col=fx(0.85); room2Objects[1].row=fy(0.35);
+  room2Objects[2].col=fx(0.85); room2Objects[2].row=fy(0.75);
+  room2Objects[3].col=fx(0.4);  room2Objects[3].row=fy(0.85);
+  room2Hints[0].col=fx(0.5)+4;  room2Hints[0].row=fy(0.15)+4;
+  room2Hints[1].col=fx(0.85)-4; room2Hints[1].row=fy(0.35)+4;
+  room2Hints[2].col=fx(0.85)-4; room2Hints[2].row=fy(0.75)-4;
+  room2Hints[3].col=fx(0.4)-4;  room2Hints[3].row=fy(0.85)-4;
+
+  // 3번방: 부패한 귀족 3명
+  room3Objects[0].col=fx(0.5);  room3Objects[0].row=fy(0.15);
+  room3Objects[1].col=fx(0.85); room3Objects[1].row=fy(0.5);
+  room3Objects[2].col=fx(0.3);  room3Objects[2].row=fy(0.8);
+  room3Hints[0].col=fx(0.5)+4;  room3Hints[0].row=fy(0.15)+4;
+  room3Hints[1].col=fx(0.85)-4; room3Hints[1].row=fy(0.5)+4;
+  room3Hints[2].col=fx(0.3)+4;  room3Hints[2].row=fy(0.8)-4;
+
+  // LED 랜턴: 스폰 지점 동서남북 근처에 하나씩 배치해 어느 방향으로 움직여도 금방 찾도록 한다
+  var spawnCol=SPAWN_TILE_OFFSET, spawnRow=SPAWN_TILE_OFFSET, lanternDist=5;
+  lanternObjs[0].col=Math.min(cols-4,spawnCol+lanternDist); lanternObjs[0].row=spawnRow; // 동
+  lanternObjs[1].col=Math.max(3,spawnCol-lanternDist);      lanternObjs[1].row=spawnRow; // 서
+  lanternObjs[2].col=spawnCol; lanternObjs[2].row=Math.min(rows-4,spawnRow+lanternDist); // 남
+  lanternObjs[3].col=spawnCol; lanternObjs[3].row=Math.max(3,spawnRow-lanternDist);      // 북
+
+  mapBuilt=true;
+}
+
+function getObjects(){
+  if(currentRoom===1) return room1Objects;
+  if(currentRoom===2) return room2Objects;
+  return room3Objects;
+}
+
+function gameLoop(){
+  if(!mapBuilt) buildMap();
+  if(inPopup) return;
+
+  var baseSpd=TILE/7;
+  var dirX=0,dirY=0;
+  if(pressed['ArrowLeft'])  dirX=-1;
+  if(pressed['ArrowRight']) dirX= 1;
+  if(pressed['ArrowUp'])    dirY=-1;
+  if(pressed['ArrowDown'])  dirY= 1;
+  var isMoving=(dirX!==0||dirY!==0);
+  var wantsRun=pressed[' ']&&isMoving;
+
+  // 스테미나: Space+방향키를 누르고 있으면 소모, 아니면 서서히 회복
+  if(wantsRun&&stamina>0){
+    isRunning=true;
+    stamina=Math.max(0,stamina-STAMINA_DRAIN_PER_FRAME);
+  } else {
+    isRunning=false;
+    stamina=Math.min(STAMINA_MAX,stamina+STAMINA_RECOVER_PER_FRAME);
+  }
+  var spd=baseSpd*(isRunning?RUN_MULTIPLIER:1);
+  var dx=dirX*spd, dy=dirY*spd;
+  if(dx<0) player.facing='left';
+  else if(dx>0) player.facing='right';
+
+  var stFill=document.getElementById('stamina-fill');
+  if(stFill){
+    var stPct=(stamina/STAMINA_MAX)*100;
+    stFill.style.width=stPct+'%';
+    stFill.style.background=isRunning?'linear-gradient(90deg,#ff8a00,#ff2a00)':(stPct<25?'linear-gradient(90deg,#ff8a00,#e02020)':'linear-gradient(90deg,#f5c842,#ff8a00)');
+  }
+
+  var nx=player.x+dx, ny=player.y+dy;
+  var pc=Math.floor((nx+TILE/2)/TILE);
+  var pr=Math.floor((ny+TILE/2)/TILE);
+  if(pc>0&&pc<cols-1&&pr>0&&pr<rows-1){
+    player.x=nx; player.y=ny;
+  }
+
+  var cc=Math.floor((player.x+TILE/2)/TILE);
+  var cr=Math.floor((player.y+TILE/2)/TILE);
+  var objs=getObjects();
+  var nearAny=false;
+
+  // 오브젝트 근접
+  for(var i=0;i<objs.length;i++){
+    var o=objs[i];
+    if(Math.abs(cc-o.col)<=1&&Math.abs(cr-o.row)<=1){
+      nearAny=true;
+      var tid=currentRoom===3?o.id:o.id;
+      if(lastTriggered!==o.id){
+        lastTriggered=o.id;
+        if(currentRoom===3) openRoom3ObjPopup(o);
+        else openObjPopup(o);
+        return;
+      }
+      break;
+    }
+  }
+
+  // 힌트 상자 근접 (모든 방 공통)
+  var hints=getHintObjects();
+  for(var j=0;j<hints.length;j++){
+    var h=hints[j];
+    if(Math.abs(cc-h.col)<=1&&Math.abs(cr-h.row)<=1){
+      nearAny=true;
+      if(lastHintTriggered!==h.id){lastHintTriggered=h.id;openHintPopup(h);return;}
+      break;
+    }
+  }
+
+  // LED 랜턴 근접 (아직 줍지 않았을 때만, 동서남북 4개 중 하나라도 가까우면)
+  if(!lanternPicked){
+    for(var li2=0;li2<lanternObjs.length;li2++){
+      var lo=lanternObjs[li2];
+      if(Math.abs(cc-lo.col)<=1&&Math.abs(cr-lo.row)<=1){
+        nearAny=true;
+        if(!lastLanternTriggered){lastLanternTriggered=true;openLanternPopup();return;}
+        break;
+      }
+    }
+  }
+
+  // 문 근접
+  if(Math.abs(cc-doorPos.col)<=1&&Math.abs(cr-doorPos.row)<=1){
+    nearAny=true;
+    if(!lastDoorTriggered){lastDoorTriggered=true;openDoorPopup();return;}
+  }
+
+  if(!nearAny){
+    lastTriggered=-1;
+    lastDoorTriggered=false;
+    lastHintTriggered=-1;
+    lastLanternTriggered=false;
+  }
+
+  draw();
+}
+
+// ============================================================
+// 그래픽 연출 헬퍼 (손전등 / 도트 스프라이트 / 화면 흔들림 / 플로팅 텍스트)
+// ============================================================
+
+// 화면 흔들림 트리거
+function triggerShake(mag,frames){
+  shakeMag=mag; shakeFrames=frames;
+}
+// 틀렸을 때는 캔버스가 팝업 뒤에 가려져 있으므로, 실제로 보이는 팝업 박스를 흔든다
+function shakePopup(el){
+  if(!el) return;
+  el.classList.remove('shake');
+  void el.offsetWidth; // 리플로우로 애니메이션 재시작
+  el.classList.add('shake');
+}
+
+// 획득 연출 텍스트 생성
+function spawnFloatingText(text,color){
+  floatingTexts.push({x:player.x+TILE/2, y:player.y-6, text:text, color:color||'#f5c842', life:55, maxLife:55});
+}
+function updateAndDrawFloatingTexts(){
+  for(var i=floatingTexts.length-1;i>=0;i--){
+    var ft=floatingTexts[i];
+    ft.y-=0.7;
+    ft.life--;
+    var alpha=Math.max(0,ft.life/ft.maxLife);
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.font='bold 26px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillStyle=ft.color;
+    ctx.shadowColor=ft.color;
+    ctx.shadowBlur=6;
+    ctx.fillText(ft.text, ft.x-camera.x, ft.y-camera.y); // 월드 좌표 → 화면 좌표
+    ctx.restore();
+    if(ft.life<=0) floatingTexts.splice(i,1);
+  }
+}
+
+// 상호작용 가능한 오브젝트/문 근접 시 네온 테두리
+function drawNeonBorder(x,y,w,h,color,seed){
+  var t=Date.now()/300;
+  var pulse=0.55+0.45*Math.sin(t+(seed||0));
+  ctx.save();
+  ctx.shadowColor=color;
+  ctx.shadowBlur=8+8*pulse;
+  ctx.strokeStyle=color;
+  ctx.lineWidth=2;
+  ctx.strokeRect(x,y,w,h);
+  ctx.restore();
+}
+
+// 단서 획득 표시(도트 체크 배지)
+function drawCheckBadge(x,y){
+  ctx.save();
+  ctx.fillStyle='rgba(15,12,6,0.85)';
+  ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#7CFC90';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(x-3,y);
+  ctx.lineTo(x-1,y+3);
+  ctx.lineTo(x+3.5,y-3.5);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// 레트로 도트 탐정 캐릭터 (좌/우 방향 반전 지원)
+function drawPlayerSprite(px,py,size,facing){
+  ctx.save();
+  ctx.translate(px+size/2, py+size);
+  if(facing==='left') ctx.scale(-1,1);
+  var u=size/16;
+  // 그림자
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(0,-1.5*u,size*0.3,size*0.09,0,0,Math.PI*2); ctx.fill();
+  // 신발
+  ctx.fillStyle='#1c130a';
+  ctx.fillRect(-5*u,-4*u,4*u,4*u);
+  ctx.fillRect(1*u,-4*u,4*u,4*u);
+  // 코트(하의)
+  ctx.fillStyle='#5a3820';
+  ctx.fillRect(-6*u,-11*u,12*u,7.5*u);
+  // 코트 벨트
+  ctx.fillStyle='#2a1a10';
+  ctx.fillRect(-6*u,-6.5*u,12*u,1.4*u);
+  // 코트 옷깃
+  ctx.fillStyle='#6e4626';
+  ctx.fillRect(-6*u,-11*u,12*u,2*u);
+  // 목/얼굴
+  ctx.fillStyle='#e8c89a';
+  ctx.fillRect(-3*u,-15.5*u,6*u,4.8*u);
+  // 눈(진행 방향)
+  ctx.fillStyle='#1a1208';
+  ctx.fillRect(0.8*u,-13.2*u,1.6*u,1.6*u);
+  // 모자 챙
+  ctx.fillStyle='#3a2410';
+  ctx.fillRect(-6.5*u,-17*u,13*u,2*u);
+  // 모자 크라운
+  ctx.fillStyle='#4a2e18';
+  ctx.fillRect(-4*u,-20.5*u,8*u,4*u);
+  ctx.fillStyle='#6e4626';
+  ctx.fillRect(-4*u,-20.5*u,8*u,1.2*u);
+  // 손전등 광원 표시(작은 포인트)
+  ctx.fillStyle='#ffe9a8';
+  ctx.fillRect(5.5*u,-10*u,1.6*u,1.6*u);
+  ctx.restore();
+}
+
+// ── 오브젝트 도트 아이콘 ──
+function iconBookshelf(x,y,s,accent){
+  ctx.fillStyle='#3a2313'; ctx.fillRect(x+4,y+4,s-8,s-8);
+  ctx.fillStyle='#5c3a1e'; ctx.fillRect(x+4,y+4,s-8,4);
+  var spineColors=['#8B1A1A',accent,'#3a5a8a'];
+  var sw=(s-14)/3;
+  for(var i=0;i<3;i++){
+    ctx.fillStyle=spineColors[i];
+    ctx.fillRect(x+7+i*(sw+1),y+11,sw,s-19);
+  }
+}
+function iconPortrait(x,y,s,accent){
+  ctx.fillStyle='#c8a028'; ctx.fillRect(x+4,y+3,s-8,s-8);
+  ctx.fillStyle='#241018'; ctx.fillRect(x+7,y+6,s-14,s-14);
+  ctx.fillStyle='#40202a'; ctx.fillRect(x+s/2-4,y+11,8,7); // 머리
+  ctx.fillStyle='#2c1622'; ctx.fillRect(x+s/2-6,y+18,12,6); // 어깨
+}
+function iconNote(x,y,s){
+  ctx.save();
+  ctx.translate(x+s/2,y+s/2);
+  ctx.rotate(-0.08);
+  ctx.fillStyle='#e8dcc0';
+  ctx.fillRect(-s*0.32,-s*0.28,s*0.64,s*0.56);
+  ctx.fillStyle='#c8b888';
+  for(var i=0;i<3;i++) ctx.fillRect(-s*0.22,-s*0.12+i*6,s*0.44,2);
+  ctx.restore();
+}
+function iconScroll(x,y,s,accent){
+  ctx.fillStyle='#4a3018'; ctx.fillRect(x+4,y+s*0.35,6,s*0.3);
+  ctx.fillStyle='#4a3018'; ctx.fillRect(x+s-10,y+s*0.35,6,s*0.3);
+  ctx.fillStyle='#d8c48a'; ctx.fillRect(x+8,y+s*0.32,s-16,s*0.36);
+  ctx.fillStyle=accent;
+  for(var i=0;i<3;i++) ctx.fillRect(x+11,y+s*0.38+i*5,s-22,1.6);
+}
+function iconScale(x,y,s,accent){
+  ctx.fillStyle='#888'; ctx.fillRect(x+s/2-1.5,y+6,3,s-16);
+  ctx.fillStyle='#888'; ctx.fillRect(x+7,y+9,s-14,3);
+  ctx.fillStyle='#6a6a6a'; ctx.fillRect(x+s/2-6,y+s-12,12,3);
+  ctx.fillStyle=accent;
+  ctx.fillRect(x+6,y+13,7,5);
+  ctx.fillRect(x+s-13,y+13,7,5);
+}
+function iconOpenBook(x,y,s,accent){
+  ctx.fillStyle='#e8dcc0'; ctx.fillRect(x+5,y+9,s*0.42,s-18);
+  ctx.fillRect(x+s-5-s*0.42,y+9,s*0.42,s-18);
+  ctx.fillStyle='#4a3018'; ctx.fillRect(x+s/2-1,y+9,2,s-18);
+  ctx.fillStyle=accent;
+  for(var i=0;i<3;i++){
+    ctx.fillRect(x+8,y+14+i*5,s*0.3,1.5);
+    ctx.fillRect(x+s-8-s*0.3,y+14+i*5,s*0.3,1.5);
+  }
+}
+function iconReport(x,y,s,accent){
+  ctx.fillStyle='#e8e4d8'; ctx.fillRect(x+7,y+6,s-14,s-12);
+  ctx.fillStyle='#8a8478'; ctx.fillRect(x+s/2-5,y+3,10,5);
+  var barH=[8,14,6,11];
+  for(var i=0;i<4;i++){
+    ctx.fillStyle=accent;
+    ctx.fillRect(x+11+i*6,y+s-10-barH[i],4,barH[i]);
+  }
+}
+function iconNewspaper(x,y,s){
+  ctx.fillStyle='#e8e4d4'; ctx.fillRect(x+5,y+6,s-10,s-14);
+  ctx.fillStyle='#282018'; ctx.fillRect(x+8,y+9,s-16,4);
+  ctx.fillStyle='#a8a292';
+  for(var i=0;i<4;i++) ctx.fillRect(x+8,y+16+i*4,s-16,1.6);
+}
+function iconFileBox(x,y,s,accent){
+  ctx.fillStyle='#4a3a2a'; ctx.fillRect(x+5,y+5,s-10,s-10);
+  ctx.fillStyle='#3a2c1e'; ctx.fillRect(x+5,y+s*0.42,s-10,1.5);
+  ctx.fillStyle='#3a2c1e'; ctx.fillRect(x+5,y+s*0.68,s-10,1.5);
+  ctx.fillStyle=accent; ctx.fillRect(x+s/2-4,y+s*0.5,8,3);
+}
+// 힌트 상자(나무 상자, X자 보강대)
+function iconCrate(x,y,s){
+  ctx.fillStyle='#5a3c22'; ctx.fillRect(x+5,y+8,s-10,s-13);
+  ctx.strokeStyle='#3a2414'; ctx.lineWidth=2;
+  ctx.strokeRect(x+5,y+8,s-10,s-13);
+  ctx.beginPath();
+  ctx.moveTo(x+5,y+8); ctx.lineTo(x+s-5,y+s-5);
+  ctx.moveTo(x+s-5,y+8); ctx.lineTo(x+5,y+s-5);
+  ctx.stroke();
+  ctx.fillStyle='#c9a96e'; ctx.fillRect(x+s/2-3,y+5,6,4);
+}
+// LED 랜턴 (줍기 전 표시되는 아이템)
+function iconLantern(x,y,s){
+  ctx.fillStyle='#3a3a3a'; ctx.fillRect(x+s/2-2,y+4,4,6);
+  ctx.fillStyle='#e8c840'; ctx.fillRect(x+s*0.25,y+10,s*0.5,s*0.5);
+  ctx.strokeStyle='#8a6800'; ctx.lineWidth=1.5; ctx.strokeRect(x+s*0.25,y+10,s*0.5,s*0.5);
+  ctx.fillStyle='#fff8d0'; ctx.fillRect(x+s*0.33,y+s*0.42,s*0.34,s*0.22);
+  ctx.fillStyle='#3a3a3a'; ctx.fillRect(x+s*0.2,y+s*0.62,s*0.6,4);
+}
+var OBJECT_ICON_DRAWERS={
+  '📚':iconBookshelf,'🖼️':iconPortrait,'🗒️':iconNote,'📜':iconScroll,
+  '⚖️':iconScale,'📖':iconOpenBook,'📊':iconReport,'📰':iconNewspaper,'🗃️':iconFileBox,
+  '📦':iconCrate,'🔦':iconLantern
+};
+function drawObjectSprite(o,x,y,size,near,accent){
+  if(near){ctx.shadowColor=accent;ctx.shadowBlur=12;}
+  var drawer=OBJECT_ICON_DRAWERS[o.emoji];
+  if(drawer){
+    if(drawer.length>=4) drawer(x,y,size,accent);
+    else drawer(x,y,size);
+  } else {
+    ctx.fillStyle='#5a4830'; ctx.fillRect(x+6,y+6,size-12,size-12);
+  }
+  ctx.shadowBlur=0;
+}
+
+function draw(){
+  var shakeX=0,shakeY=0;
+  if(shakeFrames>0){
+    shakeX=(Math.random()*2-1)*shakeMag;
+    shakeY=(Math.random()*2-1)*shakeMag;
+    shakeFrames--;
+  }
+  ctx.clearRect(-40,-40,W+80,H+80);
+  updateCamera();
+  ctx.save();
+  ctx.translate(shakeX,shakeY);
+  lightSources=[];
+
+  // 카메라만큼 화면을 이동시켜, 이 안에서는 기존처럼 "월드(맵) 좌표"로 그리면
+  // 자동으로 카메라가 비추는 위치에 맞게 그려진다.
+  ctx.save();
+  ctx.translate(-camera.x,-camera.y);
+
+  // 맵이 커졌으므로 실제로 화면에 보이는 타일만 그려 성능을 지킨다.
+  var vc0=Math.max(0,Math.floor(camera.x/TILE)-1);
+  var vc1=Math.min(cols,Math.ceil((camera.x+W)/TILE)+1);
+  var vr0=Math.max(0,Math.floor(camera.y/TILE)-1);
+  var vr1=Math.min(rows,Math.ceil((camera.y+H)/TILE)+1);
+
+  var r,c,x,y;
+
+  if(currentRoom===1){
+    // ── 1번방: 고풍스러운 저택 ──
+    // 벽
+    for(r=vr0;r<vr1;r++){
+      for(c=vc0;c<vc1;c++){
+        x=c*TILE; y=r*TILE;
+        if(r===0||r===rows-1||c===0||c===cols-1){
+          ctx.fillStyle='#2C1810'; ctx.fillRect(x,y,TILE,TILE);
+          ctx.fillStyle='#3d2415'; ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
+          ctx.strokeStyle='#1a0e08'; ctx.lineWidth=1; ctx.strokeRect(x,y,TILE,TILE);
+          ctx.strokeStyle='rgba(255,200,100,0.08)'; ctx.lineWidth=0.5;
+          ctx.strokeRect(x+3,y+3,TILE-6,TILE-6);
+        }
+      }
+    }
+    // 나무 바닥
+    for(r=Math.max(1,vr0);r<Math.min(rows-1,vr1);r++){
+      for(c=Math.max(1,vc0);c<Math.min(cols-1,vc1);c++){
+        x=c*TILE; y=r*TILE;
+        var plankRow=Math.floor(r/2)%2;
+        ctx.fillStyle=plankRow===0?'#5C3A1E':'#4A2E18';
+        ctx.fillRect(x,y,TILE,TILE);
+        ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=0.5; ctx.strokeRect(x,y,TILE,TILE);
+        ctx.fillStyle='rgba(255,180,80,0.04)'; ctx.fillRect(x,y,TILE,4);
+      }
+    }
+    // 카펫
+    var carpetX=Math.floor(cols*0.25)*TILE, carpetY=Math.floor(rows*0.25)*TILE;
+    var carpetW=Math.floor(cols*0.5)*TILE, carpetH=Math.floor(rows*0.5)*TILE;
+    ctx.fillStyle='#8B6914'; ctx.fillRect(carpetX-4,carpetY-4,carpetW+8,carpetH+8);
+    ctx.fillStyle='#6B1A1A'; ctx.fillRect(carpetX,carpetY,carpetW,carpetH);
+    ctx.fillStyle='#7d2020'; ctx.fillRect(carpetX+8,carpetY+8,carpetW-16,carpetH-16);
+    ctx.fillStyle='#8B6914';
+    ctx.beginPath(); ctx.arc(carpetX+carpetW/2,carpetY+carpetH/2,Math.min(carpetW,carpetH)*0.15,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#6B1A1A';
+    ctx.beginPath(); ctx.arc(carpetX+carpetW/2,carpetY+carpetH/2,Math.min(carpetW,carpetH)*0.1,0,Math.PI*2); ctx.fill();
+    var corners=[[carpetX+12,carpetY+12],[carpetX+carpetW-12,carpetY+12],[carpetX+12,carpetY+carpetH-12],[carpetX+carpetW-12,carpetY+carpetH-12]];
+    for(var ci=0;ci<corners.length;ci++){ctx.fillStyle='#8B6914';ctx.beginPath();ctx.arc(corners[ci][0],corners[ci][1],5,0,Math.PI*2);ctx.fill();}
+    // 촛불
+    var candlePositions=[{x:2*TILE,y:1*TILE},{x:(cols-3)*TILE,y:1*TILE},{x:2*TILE,y:(rows-2)*TILE},{x:(cols-3)*TILE,y:(rows-2)*TILE}];
+    var t=Date.now()/200;
+    for(var ci2=0;ci2<candlePositions.length;ci2++){
+      var cp=candlePositions[ci2];
+      var flicker=Math.sin(t+ci2*1.3)*0.15+0.85;
+      var grad=ctx.createRadialGradient(cp.x+TILE/2,cp.y+TILE/2,2,cp.x+TILE/2,cp.y+TILE/2,TILE*1.8);
+      grad.addColorStop(0,'rgba(255,200,80,'+(0.25*flicker)+')');
+      grad.addColorStop(1,'rgba(255,120,0,0)');
+      ctx.fillStyle=grad; ctx.fillRect(cp.x-TILE,cp.y-TILE,TILE*3,TILE*3);
+      ctx.fillStyle='#888'; ctx.fillRect(cp.x+TILE/2-3,cp.y+TILE*0.5,6,TILE*0.4);
+      ctx.fillStyle='#e8e0d0'; ctx.fillRect(cp.x+TILE/2-4,cp.y+TILE*0.2,8,TILE*0.35);
+      ctx.fillStyle='rgba(255,'+(160+Math.floor(flicker*60))+',30,0.9)';
+      ctx.beginPath(); ctx.ellipse(cp.x+TILE/2,cp.y+TILE*0.15,3,5*flicker,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,240,100,0.9)';
+      ctx.beginPath(); ctx.ellipse(cp.x+TILE/2,cp.y+TILE*0.17,1.5,3*flicker,0,0,Math.PI*2); ctx.fill();
+      lightSources.push({x:cp.x+TILE/2,y:cp.y+TILE*0.15,r:TILE*2.3,strength:0.45*flicker});
+    }
+
+  } else if(currentRoom===2){
+    // ── 2번방: 어두운 지하 기록 보관소 ──
+    // 돌벽
+    for(r=vr0;r<vr1;r++){
+      for(c=vc0;c<vc1;c++){
+        x=c*TILE; y=r*TILE;
+        if(r===0||r===rows-1||c===0||c===cols-1){
+          var stoneShade=(r*cols+c)%3;
+          var stoneColors=['#1e2a1e','#172217','#1a261a'];
+          ctx.fillStyle=stoneColors[stoneShade]; ctx.fillRect(x,y,TILE,TILE);
+          ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(x,y,TILE,2);
+          ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(x,y,2,TILE);
+          ctx.strokeStyle='#0a120a'; ctx.lineWidth=1; ctx.strokeRect(x,y,TILE,TILE);
+          // 이끼 효과
+          ctx.fillStyle='rgba(30,80,30,0.15)'; ctx.fillRect(x+2,y+TILE-6,TILE-4,5);
+        }
+      }
+    }
+    // 돌바닥
+    for(r=Math.max(1,vr0);r<Math.min(rows-1,vr1);r++){
+      for(c=Math.max(1,vc0);c<Math.min(cols-1,vc1);c++){
+        x=c*TILE; y=r*TILE;
+        var tileShade=(r+c)%2;
+        ctx.fillStyle=tileShade===0?'#1a2a1a':'#152215';
+        ctx.fillRect(x,y,TILE,TILE);
+        ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=0.8; ctx.strokeRect(x,y,TILE,TILE);
+        // 습기 표현 (랜덤하게 어두운 점)
+        if((r*7+c*13)%11===0){
+          ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(x+5,y+5,TILE-10,TILE-10);
+        }
+      }
+    }
+    // 횃불 2개 (좌우 벽 중앙)
+    var torchPos=[{x:1*TILE,y:Math.floor(rows/2)*TILE},{x:(cols-2)*TILE,y:Math.floor(rows/2)*TILE}];
+    var t2=Date.now()/150;
+    for(var ti=0;ti<torchPos.length;ti++){
+      var tp=torchPos[ti];
+      var fl2=Math.sin(t2+ti*2.1)*0.2+0.8;
+      // 횃불 빛
+      var tgrad=ctx.createRadialGradient(tp.x+TILE/2,tp.y,3,tp.x+TILE/2,tp.y,TILE*2.5);
+      tgrad.addColorStop(0,'rgba(255,140,20,'+(0.4*fl2)+')');
+      tgrad.addColorStop(0.5,'rgba(200,80,0,'+(0.15*fl2)+')');
+      tgrad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=tgrad; ctx.fillRect(tp.x-TILE*1.5,tp.y-TILE*1.5,TILE*4,TILE*4);
+      // 횃불 막대
+      ctx.fillStyle='#4a2a0a'; ctx.fillRect(tp.x+TILE/2-3,tp.y+4,6,TILE*0.6);
+      // 불꽃
+      ctx.fillStyle='rgba(255,'+(100+Math.floor(fl2*80))+',0,0.9)';
+      ctx.beginPath(); ctx.ellipse(tp.x+TILE/2,tp.y,5,9*fl2,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,220,50,0.85)';
+      ctx.beginPath(); ctx.ellipse(tp.x+TILE/2,tp.y+2,2.5,5*fl2,0,0,Math.PI*2); ctx.fill();
+      lightSources.push({x:tp.x+TILE/2,y:tp.y,r:TILE*2.8,strength:0.5*fl2});
+    }
+    // 중앙 균열 (바닥 장식)
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(Math.floor(cols*0.3)*TILE,Math.floor(rows*0.4)*TILE);
+    ctx.lineTo(Math.floor(cols*0.5)*TILE,Math.floor(rows*0.6)*TILE);
+    ctx.lineTo(Math.floor(cols*0.7)*TILE,Math.floor(rows*0.5)*TILE);
+    ctx.stroke();
+  } else if(currentRoom===3){
+    // ── 3번방: 고풍스러운 도서관/법전실 ──
+    for(var r3=vr0;r3<vr1;r3++){
+      for(var c3=vc0;c3<vc1;c3++){
+        var x3=c3*TILE, y3=r3*TILE;
+        if(r3===0||r3===rows-1||c3===0||c3===cols-1){
+          ctx.fillStyle='#1a0a2e'; ctx.fillRect(x3,y3,TILE,TILE);
+          ctx.fillStyle='#2a1245'; ctx.fillRect(x3+1,y3+1,TILE-2,TILE-2);
+          ctx.strokeStyle='#0a0518'; ctx.lineWidth=1; ctx.strokeRect(x3,y3,TILE,TILE);
+          ctx.strokeStyle='rgba(180,100,255,0.08)'; ctx.lineWidth=0.5;
+          ctx.strokeRect(x3+3,y3+3,TILE-6,TILE-6);
+        }
+      }
+    }
+    // 대리석 바닥
+    for(var r3=Math.max(1,vr0);r3<Math.min(rows-1,vr1);r3++){
+      for(var c3=Math.max(1,vc0);c3<Math.min(cols-1,vc1);c3++){
+        var x3=c3*TILE, y3=r3*TILE;
+        ctx.fillStyle=(r3+c3)%2===0?'#1e1030':'#180c28';
+        ctx.fillRect(x3,y3,TILE,TILE);
+        ctx.strokeStyle='rgba(100,50,180,0.2)'; ctx.lineWidth=0.5; ctx.strokeRect(x3,y3,TILE,TILE);
+      }
+    }
+    // 보라 촛불 4개
+    var pc3=[{x:2*TILE,y:1*TILE},{x:(cols-3)*TILE,y:1*TILE},{x:2*TILE,y:(rows-2)*TILE},{x:(cols-3)*TILE,y:(rows-2)*TILE}];
+    var t3=Date.now()/180;
+    for(var ci3=0;ci3<pc3.length;ci3++){
+      var cp3=pc3[ci3];
+      var fl3=Math.sin(t3+ci3*1.5)*0.15+0.85;
+      var g3=ctx.createRadialGradient(cp3.x+TILE/2,cp3.y+TILE/2,2,cp3.x+TILE/2,cp3.y+TILE/2,TILE*2);
+      g3.addColorStop(0,'rgba(180,100,255,'+(0.3*fl3)+')');
+      g3.addColorStop(1,'rgba(80,0,180,0)');
+      ctx.fillStyle=g3; ctx.fillRect(cp3.x-TILE,cp3.y-TILE,TILE*3,TILE*3);
+      ctx.fillStyle='#666'; ctx.fillRect(cp3.x+TILE/2-3,cp3.y+TILE*0.5,6,TILE*0.4);
+      ctx.fillStyle='#e8e0f0'; ctx.fillRect(cp3.x+TILE/2-4,cp3.y+TILE*0.2,8,TILE*0.35);
+      ctx.fillStyle='rgba(180,'+(80+Math.floor(fl3*60))+',255,0.9)';
+      ctx.beginPath(); ctx.ellipse(cp3.x+TILE/2,cp3.y+TILE*0.15,3,5*fl3,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(220,180,255,0.9)';
+      ctx.beginPath(); ctx.ellipse(cp3.x+TILE/2,cp3.y+TILE*0.17,1.5,3*fl3,0,0,Math.PI*2); ctx.fill();
+      lightSources.push({x:cp3.x+TILE/2,y:cp3.y+TILE*0.15,r:TILE*2.4,strength:0.45*fl3});
+    }
+    // 중앙 육각형 문양 (맵 전체의 중앙 — 카메라가 아니라 월드 기준)
+    ctx.strokeStyle='rgba(150,80,255,0.2)'; ctx.lineWidth=1.5;
+    var cx3=cols*TILE/2, cy3=rows*TILE/2, rad3=Math.min(W,H)*0.18;
+    ctx.beginPath();
+    for(var hi3=0;hi3<6;hi3++){
+      var ang3=hi3*Math.PI/3-Math.PI/6;
+      if(hi3===0) ctx.moveTo(cx3+rad3*Math.cos(ang3),cy3+rad3*Math.sin(ang3));
+      else ctx.lineTo(cx3+rad3*Math.cos(ang3),cy3+rad3*Math.sin(ang3));
+    }
+    ctx.closePath(); ctx.stroke();
+  }
+
+  var cc=Math.floor((player.x+TILE/2)/TILE);
+  var cr=Math.floor((player.y+TILE/2)/TILE);
+
+  // 오브젝트 (도트 아이콘 드로잉)
+  var objs=getObjects();
+  var roomColor=currentRoom===1?'#f5c842':currentRoom===2?'#60e080':'#c080f0';
+  for(var i=0;i<objs.length;i++){
+    var o=objs[i];
+    var ox=o.col*TILE, oy=o.row*TILE;
+    var near=Math.abs(cc-o.col)<=1&&Math.abs(cr-o.row)<=1;
+    // 바닥 그림자
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(ox+TILE/2,oy+TILE-3,TILE*0.32,TILE*0.09,0,0,Math.PI*2); ctx.fill();
+    if(near) drawNeonBorder(ox+2,oy+2,TILE-4,TILE-4,roomColor,o.id);
+    drawObjectSprite(o,ox,oy,TILE,near,roomColor);
+    var cFound=currentRoom===1?cluesFound[o.clueIdx]:currentRoom===2?cluesFound2[o.clueIdx]:cluesFound3[o.clueIdx];
+    if(cFound) drawCheckBadge(ox+TILE-6,oy+9);
+    ctx.font='bold 20px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillStyle=near?roomColor:'#7a6040';
+    ctx.fillText(o.label,ox+TILE/2,oy+TILE+22);
+    if(near){
+      ctx.font='20px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+      ctx.fillStyle=roomColor;
+      ctx.fillText(currentRoom===3?'[ 대결 ]':'[ 조사 ]',ox+TILE/2,oy+TILE+44);
+    }
+  }
+
+  // 힌트 상자 (📦) — 각 단서 근처에 놓여, 다가가면 살펴볼 수 있다
+  var hints=getHintObjects();
+  var hintColor='#c9a96e';
+  for(var hi=0;hi<hints.length;hi++){
+    var h=hints[hi];
+    var hx=h.col*TILE, hy=h.row*TILE;
+    var hnear=Math.abs(cc-h.col)<=1&&Math.abs(cr-h.row)<=1;
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(hx+TILE/2,hy+TILE-3,TILE*0.28,TILE*0.08,0,0,Math.PI*2); ctx.fill();
+    if(hnear) drawNeonBorder(hx+4,hy+4,TILE-8,TILE-8,hintColor,100+hi);
+    drawObjectSprite(h,hx,hy,TILE,hnear,hintColor);
+    ctx.font='bold 18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillStyle=hnear?hintColor:'#6a5a40';
+    ctx.fillText(h.label,hx+TILE/2,hy+TILE+20);
+    if(hnear){
+      ctx.font='18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+      ctx.fillStyle=hintColor;
+      ctx.fillText('[ 살펴보기 ]',hx+TILE/2,hy+TILE+40);
+    }
+  }
+
+  // LED 랜턴 아이템 (줍기 전에만 표시, 스폰 주변 동서남북 4개)
+  if(!lanternPicked){
+    var lanternColor='#ffd966';
+    for(var lni=0;lni<lanternObjs.length;lni++){
+      var lo2=lanternObjs[lni];
+      var lx=lo2.col*TILE, ly=lo2.row*TILE;
+      var lnear=Math.abs(cc-lo2.col)<=1&&Math.abs(cr-lo2.row)<=1;
+      ctx.fillStyle='rgba(0,0,0,0.3)';
+      ctx.beginPath(); ctx.ellipse(lx+TILE/2,ly+TILE-3,TILE*0.3,TILE*0.09,0,0,Math.PI*2); ctx.fill();
+      if(lnear) drawNeonBorder(lx+2,ly+2,TILE-4,TILE-4,lanternColor,55+lni);
+      drawObjectSprite({emoji:'🔦'},lx,ly,TILE,lnear,lanternColor);
+      lightSources.push({x:lx+TILE/2,y:ly+TILE*0.3,r:TILE*1.5,strength:0.3}); // 아이템 자체도 은은히 빛난다
+      ctx.font='bold 18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillStyle=lnear?lanternColor:'#7a6040';
+      ctx.fillText('LED 랜턴',lx+TILE/2,ly+TILE+20);
+      if(lnear){
+        ctx.font='18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+        ctx.fillStyle=lanternColor;
+        ctx.fillText('[ 줍기 ]',lx+TILE/2,ly+TILE+40);
+      }
+    }
+  }
+
+  // 문 그리기 (오른쪽 벽)
+  var dx2=doorPos.col*TILE, dy2=doorPos.row*TILE;
+  var dnear=Math.abs(cc-doorPos.col)<=1&&Math.abs(cr-doorPos.row)<=1;
+  var doorColor=currentRoom===1?'#8B4513':currentRoom===2?'#1a4060':'#2a1050';
+  var doorLockColor=currentRoom===1?'#f5c842':currentRoom===2?'#60c8f0':'#c080f0';
+  // 문 틀
+  ctx.fillStyle=doorColor;
+  ctx.fillRect(dx2+2,dy2-TILE,TILE-4,TILE*2);
+  // 문 패널
+  ctx.fillStyle=currentRoom===1?'#6B3410':currentRoom===2?'#142d40':'#1a0840';
+  ctx.fillRect(dx2+5,dy2-TILE+4,TILE-10,TILE*2-8);
+  // 도트 리벳(모서리 못) 장식
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fillRect(dx2+7,dy2-TILE+6,3,3);
+  ctx.fillRect(dx2+TILE-10,dy2-TILE+6,3,3);
+  ctx.fillRect(dx2+7,dy2+TILE-9,3,3);
+  ctx.fillRect(dx2+TILE-10,dy2+TILE-9,3,3);
+  // 자물쇠 (도트 키홀)
+  if(dnear){ctx.shadowColor=doorLockColor;ctx.shadowBlur=12;}
+  ctx.fillStyle='#1a120a';
+  ctx.fillRect(dx2+TILE/2-7,dy2-5,14,13);
+  ctx.fillStyle=doorLockColor;
+  ctx.fillRect(dx2+TILE/2-5,dy2-3,10,9);
+  ctx.fillStyle='#1a120a';
+  ctx.fillRect(dx2+TILE/2-1.5,dy2,3,3);
+  ctx.fillRect(dx2+TILE/2-1,dy2+3,2,3);
+  ctx.shadowBlur=0;
+  if(dnear) drawNeonBorder(dx2+1,dy2-TILE+1,TILE-2,TILE*2-2,doorLockColor,99);
+  // 문 레이블
+  ctx.font='bold 20px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+  ctx.fillStyle=dnear?doorLockColor:'#8a7450';
+  ctx.textAlign='center';
+  ctx.fillText('잠긴 문',dx2+TILE/2,dy2-TILE-12);
+  if(dnear){
+    ctx.font='20px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+    ctx.fillStyle=doorLockColor;
+    ctx.fillText('[ 열기 ]',dx2+TILE/2,dy2+TILE+20);
+  }
+
+  // 플레이어 (레트로 도트 탐정)
+  ctx.shadowBlur=0;
+  drawPlayerSprite(player.x,player.y,TILE-4,player.facing);
+  ctx.font='bold 22px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillStyle='#f5c842';
+  ctx.fillText(student.name||'탐정',player.x+TILE/2,player.y-14);
+
+  ctx.restore(); // 카메라 translate 해제 → 다시 화면(스크린) 좌표계로 복귀
+
+  // ── 손전등 위치를 플레이어에게 부드럽게 추적 (월드 좌표 기준) ──
+  var targetLX=player.x+TILE/2, targetLY=player.y+TILE/2;
+  if(lightPos.x===0&&lightPos.y===0){ lightPos.x=targetLX; lightPos.y=targetLY; }
+  lightPos.x+=(targetLX-lightPos.x)*0.25;
+  lightPos.y+=(targetLY-lightPos.y)*0.25;
+
+  // ── 암흑 + 손전등/광원 오버레이 ──
+  // 별도의 오프스크린 캔버스(lightCtx)에서 마스크를 만든 뒤 결과 이미지만
+  // 메인 캔버스에 붙여넣는다. 이렇게 하면 마스크 생성 중 문제가 생겨도
+  // 메인 캔버스의 합성 모드(destination-out)가 새어나가 화면 전체가
+  // 새까맣게 굳어버리는 사고를 원천적으로 막을 수 있다.
+  // 광원 좌표는 월드 기준으로 쌓였으므로, 카메라만큼 빼서 화면 좌표로 바꿔 그린다.
+  if(lightCtx){
+    try{
+      lightCtx.globalCompositeOperation='source-over';
+      lightCtx.clearRect(0,0,W,H);
+      lightCtx.fillStyle='rgba(4,2,10,0.9)';
+      lightCtx.fillRect(0,0,W,H);
+      lightCtx.globalCompositeOperation='destination-out';
+      for(var li=0;li<lightSources.length;li++){
+        var ls=lightSources[li];
+        var sx=ls.x-camera.x, sy=ls.y-camera.y;
+        var lg=lightCtx.createRadialGradient(sx,sy,0,sx,sy,ls.r);
+        lg.addColorStop(0,'rgba(255,255,255,'+ls.strength+')');
+        lg.addColorStop(1,'rgba(255,255,255,0)');
+        lightCtx.fillStyle=lg;
+        lightCtx.beginPath(); lightCtx.arc(sx,sy,ls.r,0,Math.PI*2); lightCtx.fill();
+      }
+      var flashRadius=lanternOn?FLASH_RADIUS_LANTERN:FLASH_RADIUS_NORMAL;
+      var fsx=lightPos.x-camera.x, fsy=lightPos.y-camera.y;
+      var fg=lightCtx.createRadialGradient(fsx,fsy,0,fsx,fsy,flashRadius);
+      fg.addColorStop(0,'rgba(255,255,255,1)');
+      fg.addColorStop(0.75,'rgba(255,255,255,0.9)');
+      fg.addColorStop(1,'rgba(255,255,255,0)');
+      lightCtx.fillStyle=fg;
+      lightCtx.beginPath(); lightCtx.arc(fsx,fsy,flashRadius,0,Math.PI*2); lightCtx.fill();
+      lightCtx.globalCompositeOperation='source-over';
+      ctx.drawImage(lightCanvas,0,0);
+    }catch(e){
+      lightCtx.globalCompositeOperation='source-over';
+      console.error('조명 효과 오류(무시하고 계속 진행):',e);
+    }
+  }
+
+  // 획득 연출 텍스트는 어둠의 영향을 받지 않도록 항상 위에 표시 (월드→화면 좌표 변환)
+  updateAndDrawFloatingTexts();
+
+  ctx.restore(); // 화면 흔들림 translate 해제
+}
+
+// 3번방 대결 팝업 — 부패한 귀족에게 "청렴-부패 대결"(퀴즈 5문제)을 신청한다.
+var currentRoom3Obj = null;
+var room3QuizIdx = 0; // 현재 진행 중인 대결의 문제 번호(0~4). 틀리면 0으로 초기화된다.
+
+function openRoom3ObjPopup(o){
+  inPopup=true;
+  currentRoom3Obj=o;
+  var already=cluesFound3[o.clueIdx];
+  var html=
+    '<span class="obj-icon">'+o.emoji+'</span>'+
+    '<div class="obj-title">'+o.title+'</div>'+
+    '<div class="obj-text" style="white-space:pre-line;max-height:220px;overflow-y:auto">'+o.text+'</div>';
+  if(already){
+    html+='<div class="obj-clue show">'+o.clue+'</div>'+
+      '<button class="obj-btn" onclick="closeObjPopup()">확인</button>';
+  } else {
+    html+=
+      '<div style="margin-bottom:10px;font-size:24px;color:#c9a96e">부패 유형: '+o.corruptType+' · 문제 '+o.questions.length+'개 (모두 맞혀야 승리!)</div>'+
+      '<button class="obj-btn" onclick="startNobleQuiz()">⚔️ 청렴-부패 대결 신청하기</button>'+
+      '<button class="obj-btn" style="background:rgba(255,255,255,0.08);color:#c9a96e;border:1px solid rgba(245,200,66,0.2);margin-top:8px" onclick="closeObjPopup()">← 나중에 다시 오기</button>';
+  }
+  var box=document.querySelector('#obj-popup .obj-box');
+  box.innerHTML=html;
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+function startNobleQuiz(){
+  room3QuizIdx=0;
+  renderNobleQuestion();
+}
+
+function renderNobleQuestion(){
+  var o=currentRoom3Obj;
+  if(!o) return;
+  var q=o.questions[room3QuizIdx];
+  var html=
+    '<span class="obj-icon">'+o.emoji+'</span>'+
+    '<div class="obj-title">'+o.label+' — 문제 '+(room3QuizIdx+1)+' / '+o.questions.length+'</div>'+
+    '<div class="obj-text" style="white-space:pre-line">'+q.q+'</div>';
+  if(o.quizType==='ox'){
+    html+='<div style="display:flex;gap:10px;margin-bottom:10px">'+
+      '<button class="obj-btn" onclick="submitNobleAnswer(\'O\')">⭕ O</button>'+
+      '<button class="obj-btn" onclick="submitNobleAnswer(\'X\')">❌ X</button></div>';
+  } else if(o.quizType==='4c'){
+    html+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">';
+    for(var i=0;i<q.options.length;i++){
+      html+='<button class="obj-btn" style="text-align:left;font-size:23px;padding:10px 14px" onclick="submitNobleAnswer('+i+')">'+(i+1)+'. '+q.options[i]+'</button>';
+    }
+    html+='</div>';
+  } else {
+    html+='<div style="margin-bottom:8px;font-size:22px;color:#c9a96e">💡 정답은 인터넷에서 직접 조사한 후 입력하세요.</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px">'+
+      '<input type="text" id="noble-answer-input" placeholder="정답 입력" style="flex:1;padding:10px 12px;border:1px solid rgba(245,200,66,0.3);border-radius:10px;font-size:26px;font-family:inherit;color:#f0e6c8;background:rgba(0,0,0,0.4)">'+
+      '<button onclick="submitNobleAnswer(document.getElementById(\'noble-answer-input\').value)" style="padding:10px 16px;background:linear-gradient(135deg,#c8860a,#f5c842);color:#1a1208;border:none;border-radius:10px;font-size:26px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">제출</button></div>';
+  }
+  html+='<div class="pw-fb" id="noble-fb"></div>';
+  var box=document.querySelector('#obj-popup .obj-box');
+  box.innerHTML=html;
+  var input=document.getElementById('noble-answer-input');
+  if(input) input.focus();
+}
+
+// 단답형 채점: 숫자 정답은 입력값에서 숫자만 뽑아 비교, 텍스트 정답은 공백/대소문자 무시하고 비교
+function checkShortAnswer(input,correct){
+  var a=String(input||'').trim();
+  var b=String(correct||'').trim();
+  if(/^\d+$/.test(b)){
+    var m=a.match(/\d+/);
+    return !!m && m[0]===b;
+  }
+  var norm=function(s){return s.trim().replace(/\s+/g,'').toLowerCase();};
+  return norm(a)===norm(b);
+}
+
+function submitNobleAnswer(val){
+  var o=currentRoom3Obj;
+  if(!o) return;
+  var q=o.questions[room3QuizIdx];
+  var correct = (o.quizType==='short') ? checkShortAnswer(val,q.answer) : (String(val)===String(q.answer));
+
+  if(correct){
+    room3QuizIdx++;
+    if(room3QuizIdx>=o.questions.length){
+      // 5문제 모두 격파 → 대결 승리, 숫자 획득
+      cluesFound3[o.clueIdx]=true;
+      updateClueSlots();
+      spawnFloatingText('+1 숫자 획득!','#c080f0');
+      var box=document.querySelector('#obj-popup .obj-box');
+      box.innerHTML=
+        '<span class="obj-icon">🏅</span>'+
+        '<div class="obj-title">'+o.label+' 대결 승리!</div>'+
+        '<div class="obj-clue show">'+o.clue+'</div>'+
+        '<button class="obj-btn" onclick="closeObjPopup()">확인</button>';
+    } else {
+      renderNobleQuestion();
+    }
+  } else {
+    triggerShake(6,10);
+    shakePopup(document.querySelector('#obj-popup .obj-box'));
+    room3QuizIdx=0;
+    var box2=document.querySelector('#obj-popup .obj-box');
+    box2.innerHTML=
+      '<span class="obj-icon">'+o.emoji+'</span>'+
+      '<div class="obj-title">'+o.label+' — 패배!</div>'+
+      '<div class="pw-fb wrong" style="display:block">🔒 틀렸습니다! 1번 문제부터 처음부터 다시 도전해야 합니다.</div>'+
+      '<button class="obj-btn" onclick="startNobleQuiz()">⚔️ 처음부터 다시 도전</button>'+
+      '<button class="obj-btn" style="background:rgba(255,255,255,0.08);color:#c9a96e;border:1px solid rgba(245,200,66,0.2);margin-top:8px" onclick="closeObjPopup()">← 나중에 다시 오기</button>';
+  }
+}
+
+// 힌트 팝업 (오브젝트 팝업 재활용)
+function openHintPopup(h){
+  inPopup=true;
+  document.getElementById('op-icon').textContent=h.emoji;
+  document.getElementById('op-title').textContent=h.title;
+  document.getElementById('op-text').textContent=h.text;
+  var clueEl=document.getElementById('op-clue');
+  clueEl.textContent='';
+  clueEl.classList.remove('show');
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+// 오브젝트 팝업
+function openObjPopup(o){
+  inPopup=true;
+  document.getElementById('op-icon').textContent=o.emoji;
+  document.getElementById('op-title').textContent=o.title;
+  document.getElementById('op-text').textContent=o.text;
+  var clueEl=document.getElementById('op-clue');
+  if(currentRoom===1){
+    if(!cluesFound[o.clueIdx]){cluesFound[o.clueIdx]=true;updateClueSlots();spawnFloatingText('+1 단서 획득!','#f5c842');}
+  } else if(currentRoom===2){
+    if(!cluesFound2[o.clueIdx]){cluesFound2[o.clueIdx]=true;updateClueSlots();spawnFloatingText('+1 단서 획득!','#60e080');}
+  } else {
+    if(!cluesFound3[o.clueIdx]){cluesFound3[o.clueIdx]=true;updateClueSlots();spawnFloatingText('+1 단서 획득!','#c080f0');}
+  }
+  clueEl.textContent=o.clue;
+  clueEl.classList.add('show');
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+// 3번방 타이핑 팝업/랜턴 팝업처럼 .obj-box 내부를 통째로 덮어쓰는 팝업들이 있으므로,
+// 팝업을 닫을 때마다 기본 구조(#op-icon/#op-title/#op-text/#op-clue)로 복원해서
+// 다음 openHintPopup()/openObjPopup() 호출이 항상 정상 동작하도록 보장한다.
+var OBJ_BOX_DEFAULT_HTML =
+  '<span class="obj-icon" id="op-icon">📚</span>'+
+  '<div class="obj-title" id="op-title"></div>'+
+  '<div class="obj-text" id="op-text"></div>'+
+  '<div class="obj-clue" id="op-clue"></div>'+
+  '<button class="obj-btn" onclick="closeObjPopup()">확인</button>';
+
+function closeObjPopup(){
+  inPopup=false;
+  document.getElementById('obj-popup').style.display='none';
+  var box=document.querySelector('#obj-popup .obj-box');
+  if(box) box.innerHTML=OBJ_BOX_DEFAULT_HTML;
+  player.y=Math.min(player.y+TILE*1.5,(rows-2)*TILE);
+  draw();
+}
+
+// LED 랜턴 팝업 (Yes/No 선택)
+function openLanternPopup(){
+  inPopup=true;
+  var html=
+    '<span class="obj-icon">🔦</span>'+
+    '<div class="obj-title">낡은 LED 랜턴</div>'+
+    '<div class="obj-text">바닥에 반쯤 묻힌 랜턴을 주웠다.\n\n랜턴을 사용하시겠습니까?\n(사용하면 손전등이 비추는 범위가 2배로 넓어집니다)</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button class="obj-btn" onclick="useLantern(true)">사용한다 (Yes)</button>'+
+      '<button class="obj-btn" style="background:rgba(255,255,255,0.08);color:#c9a96e;border:1px solid rgba(245,200,66,0.2)" onclick="useLantern(false)">나중에 (No)</button>'+
+    '</div>';
+  var box=document.querySelector('#obj-popup .obj-box');
+  box.innerHTML=html;
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+function useLantern(yes){
+  lanternPicked=true;
+  lanternOn=!!yes;
+  closeObjPopup();
+  document.getElementById('hint-bar').textContent = lanternOn
+    ? '🔦 랜턴이 켜졌습니다! 더 넓은 범위가 보입니다. (L 키로 끄기/켜기)'
+    : '🔦 랜턴을 챙겼습니다. 필요할 때 L 키를 눌러 사용하세요.';
+}
+
+function updateClueSlots(){
+  var cf, cnt, prefix;
+  if(currentRoom===1){cf=cluesFound;cnt=3;prefix='단서';}
+  else if(currentRoom===2){cf=cluesFound2;cnt=4;prefix='단서';}
+  else{cf=cluesFound3;cnt=3;prefix='귀족';}
+  var slots=document.getElementById('clue-slots');
+  var html='';
+  for(var i=0;i<cnt;i++){
+    var found=cf[i];
+    var title=currentRoom===3?'클릭하면 대결 결과를 다시 볼 수 있어요':'클릭하면 단서 내용을 다시 볼 수 있어요';
+    html+='<span class="clue-slot'+(found?' found':'')+'"'+
+      (found?' onclick="viewClueByIdx('+i+')" style="cursor:pointer" title="'+title+'"':'')+
+      ' id="cs'+i+'">'+(found?prefix+(i+1)+' ✅':prefix+(i+1)+' 🔒')+'</span>';
+  }
+  slots.innerHTML=html;
+}
+
+// 이미 찾은 단서를 HUD에서 클릭하면 다시 찾아가지 않아도 내용을 볼 수 있게 한다
+function viewClueByIdx(i){
+  if(inPopup) return;
+  var cf=currentRoom===1?cluesFound:currentRoom===2?cluesFound2:cluesFound3;
+  if(!cf[i]) return; // 아직 못 찾은 단서는 무시
+  var objs=getObjects();
+  var o=null;
+  for(var k=0;k<objs.length;k++){ if(objs[k].clueIdx===i){ o=objs[k]; break; } }
+  if(!o) return;
+  inPopup=true;
+  document.getElementById('op-icon').textContent=o.emoji;
+  document.getElementById('op-title').textContent=o.title;
+  document.getElementById('op-text').textContent=o.text;
+  var clueEl=document.getElementById('op-clue');
+  clueEl.textContent=o.clue;
+  clueEl.classList.add('show');
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+// 문 팝업
+function openDoorPopup(){
+  inPopup=true;
+  var cf, items, maxLen;
+  if(currentRoom===1){
+    cf=cluesFound;
+    items=[{icon:'📚',label:'단서 1',idx:0},{icon:'🖼️',label:'단서 2',idx:1},{icon:'🗒️',label:'단서 3',idx:2}];
+    maxLen='4';
+  } else if(currentRoom===2){
+    cf=cluesFound2;
+    items=[{icon:'📜',label:'단서 1',idx:0},{icon:'⚖️',label:'단서 2',idx:1},{icon:'📖',label:'단서 3',idx:2},{icon:'📊',label:'단서 4',idx:3}];
+    maxLen='8';
+  } else {
+    cf=cluesFound3;
+    items=[{icon:'💰',label:'황금손 대감',idx:0},{icon:'🏦',label:'곳간지기 영감',idx:1},{icon:'🎭',label:'청탁왕 판서',idx:2}];
+    maxLen='3';
+  }
+  var html='';
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    if(cf[it.idx]) html+='<div class="clue-item found"><span class="ci-icon">'+it.icon+'</span>'+it.label+'</div>';
+    else html+='<div class="clue-item"><span class="ci-icon">'+it.icon+'</span>'+it.label+(currentRoom===3?'<span class="ci-lock">🔒 대결 전</span>':'<span class="ci-lock">🔒 미발견</span>')+'</div>';
+  }
+  document.getElementById('clues-summary').innerHTML=html;
+  var doorDescMsg=currentRoom===3?'세 귀족에게서 얻은 숫자를 순서대로 이어붙여라.':'방 안의 단서들을 조합하라.';
+  document.querySelector('.door-box p.door-desc').innerHTML='이 문은 <strong style="color:#f5c842">'+maxLen+'자리 비밀번호</strong>로 잠겨 있다.<br>'+doorDescMsg;
+  document.querySelector('.pw-label').textContent='비밀번호 입력 ('+maxLen+'자리)';
+  document.getElementById('pw-input').maxLength=maxLen;
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-fb').style.display='none';
+  document.getElementById('door-popup').style.display='flex';
+}
+
+function closeDoorPopup(){
+  inPopup=false;
+  document.getElementById('door-popup').style.display='none';
+  player.x=Math.max(player.x-TILE*2,TILE);
+  draw();
+}
+
+function checkDoorPW(){
+  var val=document.getElementById('pw-input').value.trim();
+  var fb=document.getElementById('pw-fb');
+  fb.style.display='block';
+  var correct=(currentRoom===1&&val===ROOM1_PW)||(currentRoom===2&&val===ROOM2_PW)||(currentRoom===3&&val===ROOM3_PW);
+  if(correct){
+    fb.className='pw-fb ok';
+    fb.innerHTML='✅ 자물쇠가 열렸습니다! 문이 열립니다...';
+    setTimeout(function(){
+      document.getElementById('door-popup').style.display='none';
+      if(currentRoom===3){
+        showFinalClear();
+      } else {
+        startRoomTransition();
+      }
+    },1200);
+  } else {
+    fb.className='pw-fb wrong';
+    fb.innerHTML='🔒 틀렸습니다. 단서들을 다시 확인해보세요.';
+    triggerShake(6,10);
+    shakePopup(document.querySelector('.door-box'));
+  }
+}
+
+// 탈출 소요 시간에 따른 등급 (경쟁 순위가 아닌, 개인별 성취 등급)
+function getGradeInfo(seconds){
+  var m=seconds/60;
+  if(m<=10)  return {grade:'S',color:'#ffd966',title:'명탐정 청렴관',desc:'10분 이내에 모든 사건을 완벽하게 해결했습니다!\n최고의 청렴 수사관입니다.'};
+  if(m<=13)  return {grade:'A',color:'#e0c0ff',title:'베테랑 수사관',desc:'13분 이내에 왕국의 부패를 모두 밝혀냈습니다.\n훌륭한 실력입니다!'};
+  if(m<=17)  return {grade:'B',color:'#80e0b0',title:'성실한 수사관',desc:'꼼꼼하게 단서를 찾아 사건을 해결했습니다.\n수고하셨습니다!'};
+  return         {grade:'C',color:'#a0c8e0',title:'끈기있는 수사관',desc:'포기하지 않고 끝까지 왕국의 비밀을 파헤쳤습니다.\n완주 자체가 값진 성과입니다!'};
+}
+
+function showFinalClear(){
+  var elapsedSeconds=Math.max(0,Math.round((Date.now()-gameStartTime)/1000));
+  document.getElementById('final-clear').style.display='flex';
+  document.getElementById('final-score').textContent=
+    student.grade+'학년 '+student.cls+'반 '+student.num+'번 '+student.name+
+    '\n획득 단서/대결 승리: '+
+    (cluesFound.filter(Boolean).length)+'/3 + '+
+    (cluesFound2.filter(Boolean).length)+'/4 + '+
+    (cluesFound3.filter(Boolean).length)+'/3'+
+    '\n소요 시간: '+formatTime(elapsedSeconds);
+  var gi=getGradeInfo(elapsedSeconds);
+  var badgeEl=document.getElementById('grade-badge');
+  badgeEl.textContent=gi.grade;
+  badgeEl.style.color=gi.color;
+  var titleEl=document.getElementById('grade-title');
+  titleEl.textContent=gi.title;
+  titleEl.style.color=gi.color;
+  document.getElementById('grade-desc').textContent=gi.desc;
+  saveResultToFirebase(elapsedSeconds);
+}
+
+// Firestore에 결과 자동 저장
+function saveResultToFirebase(timeInSeconds){
+  if(!db){ console.warn('Firebase 미설정으로 저장을 건너뜁니다.'); return; }
+  db.collection('leaderboard').add({
+    grade: student.grade,
+    cls: student.cls,
+    num: student.num,
+    name: student.name,
+    time: timeInSeconds,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(err){
+    console.error('Firebase 저장 실패:', err);
+  });
+}
+
+// 방 전환 연출 (아래 함수에서 통합 처리)
+function startRoomTransition(){
+  var overlay=document.getElementById('transition');
+  overlay.style.display='block';
+  setTimeout(function(){overlay.classList.add('fade-in');},50);
+  setTimeout(function(){
+    if(currentRoom===1) showRoom2Intro();
+    else if(currentRoom===2) showRoom3Intro();
+  },800);
+}
+
+function showRoom2Intro(){
+  document.getElementById('room2-intro').style.display='flex';
+  var overlay=document.getElementById('transition');
+  overlay.classList.remove('fade-in');
+  setTimeout(function(){overlay.style.display='none';},600);
+}
+
+function enterRoom2(){
+  document.getElementById('room2-intro').style.display='none';
+  // 팝업 완전 초기화
+  inPopup=false;
+  document.getElementById('obj-popup').style.display='none';
+  document.getElementById('door-popup').style.display='none';
+  currentRoom=2;
+  cluesFound2=[false,false,false,false];
+  lastTriggered=-1;
+  lastDoorTriggered=true; // 처음엔 문 감지 막기
+  lastHintTriggered=-1;
+  lanternPicked=false; lanternOn=false; lastLanternTriggered=false;
+  document.getElementById('room-title').textContent='🚪 2번 방 — 증거의 방';
+  document.getElementById('room-title').style.color='#60e080';
+  updateClueSlots();
+  mapBuilt=false;
+  buildMap();
+  // 플레이어를 왼쪽 상단에 배치 (문과 최대한 멀리)
+  player.x=TILE*SPAWN_TILE_OFFSET;
+  player.y=TILE*SPAWN_TILE_OFFSET;
+  lightPos.x=player.x+TILE/2; lightPos.y=player.y+TILE/2;
+  document.getElementById('hint-bar').textContent='💡 어두운 지하 기록 보관소. 단서를 찾아라!';
+  // 1초 후 문 감지 다시 활성화
+  setTimeout(function(){ lastDoorTriggered=false; }, 1000);
+  draw();
+}
+
+function showRoom3Intro(){
+  document.getElementById('room3-intro').style.display='flex';
+  var overlay=document.getElementById('transition');
+  overlay.classList.remove('fade-in');
+  setTimeout(function(){overlay.style.display='none';},600);
+}
+
+function enterRoom3(){
+  document.getElementById('room3-intro').style.display='none';
+  inPopup=false;
+  document.getElementById('obj-popup').style.display='none';
+  document.getElementById('door-popup').style.display='none';
+  currentRoom=3;
+  cluesFound3=[false,false,false];
+  lastTriggered=-1;
+  lastDoorTriggered=true;
+  lastHintTriggered=-1;
+  lanternPicked=false; lanternOn=false; lastLanternTriggered=false;
+  document.getElementById('room-title').textContent='🚪 3번 방 — 대결의 방';
+  document.getElementById('room-title').style.color='#c080f0';
+  updateClueSlots();
+  mapBuilt=false;
+  buildMap();
+  player.x=TILE*SPAWN_TILE_OFFSET;
+  player.y=TILE*SPAWN_TILE_OFFSET;
+  lightPos.x=player.x+TILE/2; lightPos.y=player.y+TILE/2;
+  document.getElementById('hint-bar').textContent='💡 대결의 방. 귀족에게 다가가 청렴-부패 대결(퀴즈 5문제)을 신청하라!';
+  setTimeout(function(){lastDoorTriggered=false;},1000);
+  draw();
+}
+
+</script>
+</body>
+</html>
