@@ -13,7 +13,7 @@ body{font-family:'Noto Serif KR',Georgia,serif;font-weight:300;}
 #pbar-wrap{position:fixed;top:0;left:0;width:100%;height:3px;background:#e8e6e0;z-index:100;}
 #pbar{height:100%;width:0;background:#7a7a7a;transition:width .5s ease;}
 
-#indicator{position:fixed;top:12px;right:16px;font-size:11px;color:#bbb;letter-spacing:.1em;z-index:100;}
+#indicator{position:fixed;top:12px;right:16px;font-size:11px;color:#999;letter-spacing:.1em;z-index:100;}
 
 #content{max-width:640px;width:100%;margin:0 auto;padding:3.5rem 1.75rem 8rem;min-height:100vh;}
 
@@ -27,18 +27,18 @@ body{font-family:'Noto Serif KR',Georgia,serif;font-weight:300;}
 
 /* Cover */
 .cover{text-align:center;padding:5rem 0 3rem;}
-.cover-src{font-size:12px;color:#bbb;line-height:1.9;margin-bottom:3rem;}
+.cover-src{font-size:12px;color:#888;line-height:1.9;margin-bottom:3rem;}
 .cover-title{font-size:30px;font-weight:500;letter-spacing:.1em;margin-bottom:.5rem;}
 .cover-deco{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:2.5rem;}
 .cover-deco-line{width:40px;height:.5px;background:#ccc;display:inline-block;}
-.cover-deco-text{font-style:normal;font-size:12px;color:#aaa;letter-spacing:.2em;}
-.cover-guide{font-size:13px;color:#999;line-height:2;margin-bottom:3rem;border:.5px solid #e8e6e0;padding:1.25rem 1.5rem;border-radius:2px;text-align:left;}
-.cover-guide b{font-weight:400;color:#666;}
+.cover-deco-text{font-style:normal;font-size:12px;color:#888;letter-spacing:.2em;}
+.cover-guide{font-size:13px;color:#777;line-height:2;margin-bottom:3rem;border:.5px solid #e8e6e0;padding:1.25rem 1.5rem;border-radius:2px;text-align:left;}
+.cover-guide b{font-weight:400;color:#444;}
 
 /* Story */
 .story-p{font-size:16px;line-height:2.05;margin-bottom:1.25em;word-break:keep-all;}
 .story-p.dialogue{color:#3a3a3a;padding-left:1em;border-left:2px solid #e0ddd6;margin-left:.5em;}
-.story-p.thought{font-style:italic;color:#777;font-size:15px;}
+.story-p.thought{font-style:italic;color:#666;font-size:15px;}
 .story-p:last-child{margin-bottom:0;}
 .cursor{display:inline-block;width:1.5px;height:.9em;background:#aaa;margin-left:1px;vertical-align:middle;animation:blink .75s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
@@ -48,26 +48,26 @@ body{font-family:'Noto Serif KR',Georgia,serif;font-weight:300;}
 /* Question */
 .q-wrap{padding:.5rem 0;}
 .q-badge{display:inline-block;font-size:11px;color:#888;border:.5px solid #ddd;padding:4px 14px;border-radius:20px;margin-bottom:1.5rem;letter-spacing:.1em;}
-.q-num{font-size:12px;color:#aaa;margin-bottom:.5rem;letter-spacing:.1em;}
+.q-num{font-size:12px;color:#888;margin-bottom:.5rem;letter-spacing:.1em;}
 .q-text{font-size:15px;line-height:2.1;color:#2a2a2a;white-space:pre-line;margin-bottom:2rem;word-break:keep-all;}
 .q-textarea{width:100%;min-height:130px;border:.5px solid #ccc;border-radius:3px;padding:14px;font-family:'Noto Serif KR',Georgia,serif;font-size:14px;line-height:1.9;resize:vertical;background:#fff;color:#1a1a1a;outline:none;font-weight:300;}
 .q-textarea:focus{border-color:#888;}
 .q-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
-.q-hint{font-size:12px;color:#bbb;}
-.q-counter{font-size:12px;color:#bbb;}
+.q-hint{font-size:12px;color:#888;}
+.q-counter{font-size:12px;color:#888;}
 .q-counter.ok{color:#5a8a5a;}
 
 /* Epilogue */
 .epi-rule{border:none;border-top:.5px solid #ddd;margin:3rem 0;}
-.epi-p{font-size:14px;line-height:2.4;color:#777;text-align:center;margin-bottom:.6em;}
-.epi-end{text-align:center;font-size:12px;letter-spacing:.3em;color:#bbb;margin-top:2.5rem;}
+.epi-p{font-size:14px;line-height:2.4;color:#5c5c5c;text-align:center;margin-bottom:.6em;}
+.epi-end{text-align:center;font-size:12px;letter-spacing:.3em;color:#999;margin-top:2.5rem;}
 
 /* Done */
 .done-wrap{text-align:center;padding:5rem 1rem 3rem;}
 .done-icon{font-size:44px;margin-bottom:1.5rem;}
 .done-title{font-size:22px;font-weight:500;margin-bottom:1.25rem;letter-spacing:.05em;}
-.done-text{font-size:14px;color:#777;line-height:2.1;margin-bottom:2rem;word-break:keep-all;}
-.done-src{font-size:12px;color:#bbb;line-height:1.9;margin-top:2.5rem;border-top:.5px solid #eee;padding-top:1.5rem;}
+.done-text{font-size:14px;color:#5c5c5c;line-height:2.1;margin-bottom:2rem;word-break:keep-all;}
+.done-src{font-size:12px;color:#888;line-height:1.9;margin-top:2.5rem;border-top:.5px solid #eee;padding-top:1.5rem;}
 
 .fade-in{animation:fin .45s ease both;}
 @keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -84,7 +84,10 @@ body{font-family:'Noto Serif KR',Georgia,serif;font-weight:300;}
 <div id="pbar-wrap"><div id="pbar"></div></div>
 <span id="indicator"></span>
 <div id="content"></div>
-<div id="nav-wrap"><button id="next-btn" class="btn btn-dark" onclick="goNext()" disabled>읽기 시작</button></div>
+<div id="nav-wrap">
+  <button id="prev-btn" class="btn" onclick="goPrev()" disabled>← 이전</button>
+  <button id="next-btn" class="btn btn-dark" onclick="goNext()" disabled>읽기 시작</button>
+</div>
 
 <script>
 const PAGES = [
@@ -259,6 +262,9 @@ const PAGES = [
 let cur = 0;
 let typing = false;
 let skipTyping = false;
+let renderId = 0;
+const answers = {};
+const seenStoryPages = new Set();
 
 const storyPages = PAGES.filter(p => p.type === 'story' || p.type === 'question' || p.type === 'epilogue').length;
 
@@ -284,12 +290,18 @@ function goNext() {
   if (cur < PAGES.length - 1) { cur++; render(); }
 }
 
+function goPrev() {
+  if (cur > 0) { cur--; render(); }
+}
+
 function render() {
+  renderId++;
   updateProgress();
   const page = PAGES[cur];
   const c = document.getElementById('content');
   c.innerHTML = '';
   typing = false; skipTyping = false;
+  document.getElementById('prev-btn').disabled = (cur === 0);
 
   if (page.type === 'cover') renderCover(c);
   else if (page.type === 'story') renderStory(c, page);
@@ -321,17 +333,32 @@ function renderCover(c) {
 
 // ── Story ──
 function renderStory(c, page) {
-  setBtn('다음 →', false);
   const wrap = document.createElement('div');
   wrap.className = 'story-page fade-in';
   c.appendChild(wrap);
+  const myId = renderId;
+  const pageIdx = cur;
 
+  if (seenStoryPages.has(pageIdx)) {
+    page.items.forEach(([cls, text]) => {
+      const p = document.createElement('p');
+      p.className = 'story-p' + (cls ? ' ' + cls : '');
+      p.textContent = text;
+      wrap.appendChild(p);
+    });
+    setBtn('다음 →', true);
+    return;
+  }
+
+  setBtn('다음 →', false);
   typeParagraphs(wrap, page.items, 0, () => {
-    setTimeout(() => setBtn('다음 →', true), 400);
-  });
+    seenStoryPages.add(pageIdx);
+    setTimeout(() => { if (myId === renderId) setBtn('다음 →', true); }, 400);
+  }, myId);
 }
 
-function typeParagraphs(wrap, items, idx, done) {
+function typeParagraphs(wrap, items, idx, done, myId) {
+  if (myId !== renderId) return;
   if (idx >= items.length) { done(); return; }
   typing = true;
   const [cls, text] = items[idx];
@@ -342,17 +369,18 @@ function typeParagraphs(wrap, items, idx, done) {
   p.appendChild(cursor);
   wrap.appendChild(p);
 
-  const speed = Math.max(9, Math.floor(2200 / text.length));
+  const speed = Math.max(22, Math.floor(2200 / text.length));
   let i = 0;
 
   function tick() {
+    if (myId !== renderId) return;
     if (skipTyping) {
       p.textContent = text;
       wrap.querySelectorAll('.cursor').forEach(el => el.remove());
       const nextCursor = document.createElement('span');
       nextCursor.className = 'cursor';
       p.appendChild(nextCursor);
-      finishAllParagraphs(wrap, items, idx + 1, done);
+      finishAllParagraphs(wrap, items, idx + 1, done, myId);
       return;
     }
     if (i < text.length) {
@@ -362,13 +390,14 @@ function typeParagraphs(wrap, items, idx, done) {
     } else {
       cursor.remove();
       typing = false;
-      setTimeout(() => typeParagraphs(wrap, items, idx + 1, done), 320);
+      setTimeout(() => typeParagraphs(wrap, items, idx + 1, done, myId), 320);
     }
   }
   tick();
 }
 
-function finishAllParagraphs(wrap, items, startIdx, done) {
+function finishAllParagraphs(wrap, items, startIdx, done, myId) {
+  if (myId !== renderId) return;
   for (let i = startIdx; i < items.length; i++) {
     const [cls, text] = items[i];
     const p = document.createElement('p');
@@ -398,11 +427,13 @@ function renderQuestion(c, page) {
       </div>
     </div>`;
   document.getElementById('q-text').innerText = page.q;
-  if (page.isLast) setBtn('완료하기', false);
+  document.getElementById('q-ans').value = answers[page.qn] || '';
+  checkQ(page.min, !!page.isLast);
 }
 
 function checkQ(min, isLast) {
   const val = document.getElementById('q-ans').value;
+  answers[PAGES[cur].qn] = val;
   const len = val.length;
   const cnt = document.getElementById('q-cnt');
   cnt.textContent = len + ' / ' + min;
