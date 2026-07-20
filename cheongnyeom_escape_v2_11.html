@@ -24,18 +24,18 @@ body{background:#1a1208;color:#f0e6c8;font-family:'Apple SD Gothic Neo','Malgun 
 
 /* 게임 영역 */
 #game-wrap{display:none;flex-direction:column;align-items:center;width:100%;height:100vh}
-#hud{width:100%;max-width:660px;display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(0,0,0,0.7);border-bottom:1px solid rgba(245,200,66,0.2)}
+#hud{width:100%;max-width:660px;flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;row-gap:4px;gap:12px;padding:8px 16px;background:rgba(0,0,0,0.7);border-bottom:1px solid rgba(245,200,66,0.2)}
 #hud .room-title{font-size:26px;color:#f5c842;font-weight:700}
-#hud .clues{margin-left:auto;display:flex;gap:8px;font-size:24px;color:#c9a96e}
-.clue-slot{padding:3px 10px;border:1px solid rgba(245,200,66,0.2);border-radius:20px;transition:all 0.3s}
+#hud .clues{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;font-size:24px;color:#c9a96e}
+.clue-slot{padding:3px 10px;border:1px solid rgba(245,200,66,0.2);border-radius:20px;transition:all 0.3s;white-space:nowrap}
 .clue-slot.found{border-color:#f5c842;color:#f5c842;background:rgba(245,200,66,0.1)}
-#hint-bar{width:100%;max-width:660px;font-size:24px;color:#c9a96e;padding:4px 16px;background:rgba(0,0,0,0.5);text-align:center;border-bottom:1px solid rgba(245,200,66,0.1);min-height:24px}
+#hint-bar{width:100%;max-width:660px;flex-shrink:0;font-size:22px;color:#c9a96e;padding:6px 16px;background:rgba(0,0,0,0.5);text-align:center;border-bottom:1px solid rgba(245,200,66,0.1);min-height:24px;line-height:1.4;white-space:normal;word-break:keep-all;overflow-wrap:break-word}
 #gameCanvas{display:block}
 
 /* 스테미나 바 */
-#stamina-wrap{width:100%;max-width:660px;display:flex;align-items:center;gap:10px;padding:6px 16px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(245,200,66,0.1)}
+#stamina-wrap{width:100%;max-width:660px;flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;row-gap:2px;gap:10px;padding:6px 16px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(245,200,66,0.1)}
 #stamina-wrap span{font-size:20px;white-space:nowrap;color:#c9a96e}
-#stamina-track{flex:1;height:16px;background:rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;border:1px solid rgba(245,200,66,0.25)}
+#stamina-track{flex:1;min-width:80px;height:16px;background:rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;border:1px solid rgba(245,200,66,0.25)}
 #stamina-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5c842,#ff8a00);transition:width 0.08s linear,background 0.2s}
 #stamina-label{font-size:16px}
 
@@ -151,7 +151,7 @@ body{background:#1a1208;color:#f0e6c8;font-family:'Apple SD Gothic Neo','Malgun 
     <div id="stamina-track"><div id="stamina-fill"></div></div>
     <span id="stamina-label">달리기: Space+방향키</span>
   </div>
-  <div id="hint-bar">💡 화살표 키로 이동 | 오브젝트에 가까이 가면 자동으로 조사됩니다</div>
+  <div id="hint-bar">💡 화살표 키로 이동 | 가까이 가면 자동으로 조사됩니다</div>
   <canvas id="gameCanvas"></canvas>
 </div>
 
@@ -288,6 +288,11 @@ var STAMINA_RECOVER_PER_FRAME = STAMINA_MAX/300; // 10초 만에 완전 회복
 var stamina = STAMINA_MAX;
 var isRunning = false;
 var RUN_MULTIPLIER = 1.8;
+
+// ── 자전거 아이템 ── 각 방 중앙에 하나씩. 타면 스테미나 소모 없이 달리기보다 2배 빠르게 이동한다.
+var bikeObj = {col:0,row:0}; // buildMap에서 방 중앙으로 동적 설정
+var bikePicked = false, lastBikeTriggered = false;
+var BIKE_MULTIPLIER = RUN_MULTIPLIER*2;
 
 var ROOM1_PW = '1125';
 var ROOM2_PW = '11160863';
@@ -455,31 +460,14 @@ var room1Hints = [
   }
 ];
 
-// 2번방 힌트 상자 (각 단서 근처에 배치)
+// 2번방 힌트 상자 — 방 중앙에 단 하나만 배치. 정답을 직접 알려주지 않고
+// "법 이름의 마지막 두 글자"에 주목하게 만드는 방식의 힌트로 바꿨다.
 var room2Hints = [
   {
     id:'r2h0', emoji:'📦', label:'힌트',
     col:0, row:0,
-    title:'📦 힌트 — 단서 1',
-    text:'공익신고자보호법은 2011년에 시행되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
-  },
-  {
-    id:'r2h1', emoji:'📦', label:'힌트',
-    col:0, row:0,
-    title:'📦 힌트 — 단서 2',
-    text:'청탁금지법(김영란법)은 2016년부터 시행되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
-  },
-  {
-    id:'r2h2', emoji:'📦', label:'힌트',
-    col:0, row:0,
-    title:'📦 힌트 — 단서 3',
-    text:'국민권익위원회는 2008년에 설립되었다.\n뒤 두 자리 숫자를 잘 기억해두자.'
-  },
-  {
-    id:'r2h3', emoji:'📦', label:'힌트',
-    col:0, row:0,
-    title:'📦 힌트 — 단서 4',
-    text:'국제투명성기구 CPI 점수는 100점 만점 기준\n두 자리 숫자로 발표된다.'
+    title:'📦 결정적 힌트',
+    text:'공직자의 이해충돌 방지법 → 지법\n공익신고자 보호법 → 호법\n공공재정환수법 → 수법\n\n...왜 마지막 두 글자만 써놨을까?\n그나저나 자물쇠의 비밀번호는 숫자인데...'
   }
 ];
 
@@ -626,10 +614,8 @@ function buildMap(){
   room2Objects[1].col=fx(0.85); room2Objects[1].row=fy(0.35);
   room2Objects[2].col=fx(0.85); room2Objects[2].row=fy(0.75);
   room2Objects[3].col=fx(0.4);  room2Objects[3].row=fy(0.85);
-  room2Hints[0].col=fx(0.5)+4;  room2Hints[0].row=fy(0.15)+4;
-  room2Hints[1].col=fx(0.85)-4; room2Hints[1].row=fy(0.35)+4;
-  room2Hints[2].col=fx(0.85)-4; room2Hints[2].row=fy(0.75)-4;
-  room2Hints[3].col=fx(0.4)-4;  room2Hints[3].row=fy(0.85)-4;
+  // 방 중앙(자전거 자리와 겹치지 않도록 살짝 옆)에 결정적 힌트 하나만 배치
+  room2Hints[0].col=fx(0.5)+5;  room2Hints[0].row=fy(0.5)-4;
 
   // 3번방: 부패한 귀족 3명
   room3Objects[0].col=fx(0.5);  room3Objects[0].row=fy(0.15);
@@ -639,12 +625,24 @@ function buildMap(){
   room3Hints[1].col=fx(0.85)-4; room3Hints[1].row=fy(0.5)+4;
   room3Hints[2].col=fx(0.3)+4;  room3Hints[2].row=fy(0.8)-4;
 
-  // LED 랜턴: 스폰 지점 동서남북 근처에 하나씩 배치해 어느 방향으로 움직여도 금방 찾도록 한다
-  var spawnCol=SPAWN_TILE_OFFSET, spawnRow=SPAWN_TILE_OFFSET, lanternDist=5;
-  lanternObjs[0].col=Math.min(cols-4,spawnCol+lanternDist); lanternObjs[0].row=spawnRow; // 동
-  lanternObjs[1].col=Math.max(3,spawnCol-lanternDist);      lanternObjs[1].row=spawnRow; // 서
-  lanternObjs[2].col=spawnCol; lanternObjs[2].row=Math.min(rows-4,spawnRow+lanternDist); // 남
-  lanternObjs[3].col=spawnCol; lanternObjs[3].row=Math.max(3,spawnRow-lanternDist);      // 북
+  // LED 랜턴: 스폰 지점 사방(4개 대각 사분면)에 하나씩 두되, 매번 각도/거리를 무작위로 바꿔
+  // 축 위에 딱 놓이지 않게 하여 "찾는 맛"을 살린다 (너무 멀지 않도록 거리는 4~8칸으로 제한).
+  var spawnCol=SPAWN_TILE_OFFSET, spawnRow=SPAWN_TILE_OFFSET;
+  var lanternMinDist=4, lanternMaxDist=8;
+  var lanternQuadrants=[[1,1],[-1,1],[1,-1],[-1,-1]]; // 동남/서남/동북/서북
+  for(var lqi=0;lqi<lanternObjs.length;lqi++){
+    var qx=lanternQuadrants[lqi][0], qy=lanternQuadrants[lqi][1];
+    var ang=(0.15+Math.random()*0.7)*(Math.PI/2); // 축(0°, 90°)에 바짝 붙지 않도록 사분면 안쪽만 사용
+    var dist=lanternMinDist+Math.random()*(lanternMaxDist-lanternMinDist);
+    var dc=Math.round(Math.cos(ang)*dist)*qx;
+    var dr=Math.round(Math.sin(ang)*dist)*qy;
+    lanternObjs[lqi].col=Math.max(3,Math.min(cols-4,spawnCol+dc));
+    lanternObjs[lqi].row=Math.max(3,Math.min(rows-4,spawnRow+dr));
+  }
+
+  // 자전거: 방 중앙에 배치. 타면 스테미나 소모 없이 달리기보다 2배 빠르게 이동한다.
+  bikeObj.col=Math.floor(cols/2);
+  bikeObj.row=Math.floor(rows/2);
 
   mapBuilt=true;
 }
@@ -669,14 +667,18 @@ function gameLoop(){
   var wantsRun=pressed[' ']&&isMoving;
 
   // 스테미나: Space+방향키를 누르고 있으면 소모, 아니면 서서히 회복
-  if(wantsRun&&stamina>0){
+  // 자전거를 탄 상태라면 스테미나 소모 없이 항상 달리기의 2배 속도로 이동한다.
+  if(bikePicked){
+    isRunning=false;
+    stamina=Math.min(STAMINA_MAX,stamina+STAMINA_RECOVER_PER_FRAME);
+  } else if(wantsRun&&stamina>0){
     isRunning=true;
     stamina=Math.max(0,stamina-STAMINA_DRAIN_PER_FRAME);
   } else {
     isRunning=false;
     stamina=Math.min(STAMINA_MAX,stamina+STAMINA_RECOVER_PER_FRAME);
   }
-  var spd=baseSpd*(isRunning?RUN_MULTIPLIER:1);
+  var spd=baseSpd*(bikePicked?BIKE_MULTIPLIER:(isRunning?RUN_MULTIPLIER:1));
   var dx=dirX*spd, dy=dirY*spd;
   if(dx<0) player.facing='left';
   else if(dx>0) player.facing='right';
@@ -739,6 +741,14 @@ function gameLoop(){
     }
   }
 
+  // 자전거 근접 (아직 타지 않았을 때만, 방 중앙)
+  if(!bikePicked){
+    if(Math.abs(cc-bikeObj.col)<=1&&Math.abs(cr-bikeObj.row)<=1){
+      nearAny=true;
+      if(!lastBikeTriggered){lastBikeTriggered=true;openBikePopup();return;}
+    }
+  }
+
   // 문 근접
   if(Math.abs(cc-doorPos.col)<=1&&Math.abs(cr-doorPos.row)<=1){
     nearAny=true;
@@ -750,6 +760,7 @@ function gameLoop(){
     lastDoorTriggered=false;
     lastHintTriggered=-1;
     lastLanternTriggered=false;
+    lastBikeTriggered=false;
   }
 
   draw();
@@ -956,10 +967,24 @@ function iconLantern(x,y,s){
   ctx.fillStyle='#fff8d0'; ctx.fillRect(x+s*0.33,y+s*0.42,s*0.34,s*0.22);
   ctx.fillStyle='#3a3a3a'; ctx.fillRect(x+s*0.2,y+s*0.62,s*0.6,4);
 }
+// 자전거 (줍기 전 표시되는 아이템)
+function iconBike(x,y,s){
+  ctx.strokeStyle='#d0d8e0'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x+s*0.28,y+s*0.68,s*0.2,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+s*0.72,y+s*0.68,s*0.2,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#80e0ff'; ctx.lineWidth=2.2;
+  ctx.beginPath();
+  ctx.moveTo(x+s*0.28,y+s*0.68); ctx.lineTo(x+s*0.5,y+s*0.38);
+  ctx.lineTo(x+s*0.72,y+s*0.68);
+  ctx.moveTo(x+s*0.5,y+s*0.38); ctx.lineTo(x+s*0.4,y+s*0.22);
+  ctx.moveTo(x+s*0.44,y+s*0.5); ctx.lineTo(x+s*0.62,y+s*0.22);
+  ctx.stroke();
+  ctx.fillStyle='#e8dcc0'; ctx.fillRect(x+s*0.34,y+s*0.18,s*0.16,3);
+}
 var OBJECT_ICON_DRAWERS={
   '📚':iconBookshelf,'🖼️':iconPortrait,'🗒️':iconNote,'📜':iconScroll,
   '⚖️':iconScale,'📖':iconOpenBook,'📊':iconReport,'📰':iconNewspaper,'🗃️':iconFileBox,
-  '📦':iconCrate,'🔦':iconLantern
+  '📦':iconCrate,'🔦':iconLantern,'🚲':iconBike
 };
 function drawObjectSprite(o,x,y,size,near,accent){
   if(near){ctx.shadowColor=accent;ctx.shadowBlur=12;}
@@ -1243,6 +1268,26 @@ function draw(){
     }
   }
 
+  // 자전거 아이템 (타기 전에만 표시, 방 중앙)
+  if(!bikePicked){
+    var bikeColor='#80e0ff';
+    var bx2=bikeObj.col*TILE, by2=bikeObj.row*TILE;
+    var bnear=Math.abs(cc-bikeObj.col)<=1&&Math.abs(cr-bikeObj.row)<=1;
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(bx2+TILE/2,by2+TILE-3,TILE*0.32,TILE*0.09,0,0,Math.PI*2); ctx.fill();
+    if(bnear) drawNeonBorder(bx2+2,by2+2,TILE-4,TILE-4,bikeColor,66);
+    drawObjectSprite({emoji:'🚲'},bx2,by2,TILE,bnear,bikeColor);
+    ctx.font='bold 18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillStyle=bnear?bikeColor:'#7a6040';
+    ctx.fillText('자전거',bx2+TILE/2,by2+TILE+20);
+    if(bnear){
+      ctx.font='18px Apple SD Gothic Neo,Malgun Gothic,sans-serif';
+      ctx.fillStyle=bikeColor;
+      ctx.fillText('[ 타기 ]',bx2+TILE/2,by2+TILE+40);
+    }
+  }
+
   // 문 그리기 (오른쪽 벽)
   var dx2=doorPos.col*TILE, dy2=doorPos.row*TILE;
   var dnear=Math.abs(cc-doorPos.col)<=1&&Math.abs(cr-doorPos.row)<=1;
@@ -1523,8 +1568,27 @@ function useLantern(yes){
   lanternOn=!!yes;
   closeObjPopup();
   document.getElementById('hint-bar').textContent = lanternOn
-    ? '🔦 랜턴이 켜졌습니다! 더 넓은 범위가 보입니다. (L 키로 끄기/켜기)'
-    : '🔦 랜턴을 챙겼습니다. 필요할 때 L 키를 눌러 사용하세요.';
+    ? '🔦 랜턴 ON! 더 넓게 보입니다. (L: 끄기/켜기)'
+    : '🔦 랜턴 획득! 필요할 때 L 키로 켜세요.';
+}
+
+// 자전거 팝업
+function openBikePopup(){
+  inPopup=true;
+  var html=
+    '<span class="obj-icon">🚲</span>'+
+    '<div class="obj-title">낡은 자전거</div>'+
+    '<div class="obj-text">방 한가운데 놓인 자전거를 발견했다!\n\n자전거를 타면 스테미나 소모 없이 달리기보다 2배 빠르게 이동할 수 있다.</div>'+
+    '<button class="obj-btn" onclick="useBike()">🚲 자전거 타기</button>';
+  var box=document.querySelector('#obj-popup .obj-box');
+  box.innerHTML=html;
+  document.getElementById('obj-popup').style.display='flex';
+}
+
+function useBike(){
+  bikePicked=true;
+  closeObjPopup();
+  document.getElementById('hint-bar').textContent='🚲 자전거를 탔다! 훨씬 빠르게 이동할 수 있다.';
 }
 
 function updateClueSlots(){
@@ -1702,6 +1766,7 @@ function enterRoom2(){
   lastDoorTriggered=true; // 처음엔 문 감지 막기
   lastHintTriggered=-1;
   lanternPicked=false; lanternOn=false; lastLanternTriggered=false;
+  bikePicked=false; lastBikeTriggered=false;
   document.getElementById('room-title').textContent='🚪 2번 방 — 증거의 방';
   document.getElementById('room-title').style.color='#60e080';
   updateClueSlots();
@@ -1735,6 +1800,7 @@ function enterRoom3(){
   lastDoorTriggered=true;
   lastHintTriggered=-1;
   lanternPicked=false; lanternOn=false; lastLanternTriggered=false;
+  bikePicked=false; lastBikeTriggered=false;
   document.getElementById('room-title').textContent='🚪 3번 방 — 대결의 방';
   document.getElementById('room-title').style.color='#c080f0';
   updateClueSlots();
@@ -1743,7 +1809,7 @@ function enterRoom3(){
   player.x=TILE*SPAWN_TILE_OFFSET;
   player.y=TILE*SPAWN_TILE_OFFSET;
   lightPos.x=player.x+TILE/2; lightPos.y=player.y+TILE/2;
-  document.getElementById('hint-bar').textContent='💡 대결의 방. 귀족에게 다가가 청렴-부패 대결(퀴즈 5문제)을 신청하라!';
+  document.getElementById('hint-bar').textContent='💡 귀족에게 다가가 대결(퀴즈 5문제)을 신청하라!';
   setTimeout(function(){lastDoorTriggered=false;},1000);
   draw();
 }
